@@ -41,8 +41,10 @@ Thumbs.db
 # Installer output
 *.dmg
 *.msi
-*.exe
 *.nsis
+
+# Bundled binaries are allowed
+!src-tauri/binaries/*.exe
 
 # AI agent config (bleibt lokal)
 .claude/
