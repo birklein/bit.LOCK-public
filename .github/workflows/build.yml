@@ -20,13 +20,14 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install dependencies and build frontend
+        run: npm install && npm run build
+
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
-
-      - name: Install dependencies
-        run: npm install
+          key: frontend-${{ hashFiles('src/**', 'index.html', 'vite.config.js', 'tailwind.config.js') }}
 
       - name: Build Tauri app
         run: npx tauri build
@@ -62,13 +63,14 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install dependencies and build frontend
+        run: npm install && npm run build
+
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
-
-      - name: Install dependencies
-        run: npm install
+          key: frontend-${{ hashFiles('src/**', 'index.html', 'vite.config.js', 'tailwind.config.js') }}
 
       - name: Build Tauri app
         run: npx tauri build
