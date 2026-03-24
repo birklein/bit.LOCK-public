@@ -1,6 +1,6 @@
 {
   "name": "bit-lock",
-  "version": "1.0.0",
+  "version": "0.1.0-alpha",
   "description": "Sichere PDF-Verschluesselung fuer Behoerdenkommunikation – birklein IT GmbH",
   "private": true,
   "scripts": {
