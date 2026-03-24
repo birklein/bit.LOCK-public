@@ -111,11 +111,12 @@ async fn oauth2_pkce_flow(api_url: &str) -> Result<(String, String), String> {
 
     let (verifier, challenge) = generate_pkce();
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+    // Fixed port required for OAuth2 redirect_uri matching in bit.SIGN
+    const CALLBACK_PORT: u16 = 13579;
+    let listener = tokio::net::TcpListener::bind(("127.0.0.1", CALLBACK_PORT))
         .await
         .map_err(|e| format!("Callback-Server starten fehlgeschlagen: {e}"))?;
-    let port = listener.local_addr().map_err(|e| e.to_string())?.port();
-    let redirect_uri = format!("http://localhost:{}/callback", port);
+    let redirect_uri = format!("http://localhost:{}/callback", CALLBACK_PORT);
 
     // bit.SIGN OAuth2 authorize endpoint
     let auth_url = format!(
