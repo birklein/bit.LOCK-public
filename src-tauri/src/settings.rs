@@ -21,6 +21,9 @@ pub struct AppSettings {
 
     // Updates
     pub auto_check_updates: bool,
+
+    // bit.SIGN
+    pub bitsign_tenant_url: String, // z.B. "ihrefirma.bitsign.cloud"
 }
 
 impl Default for AppSettings {
@@ -34,6 +37,7 @@ impl Default for AppSettings {
             default_output_dir: String::new(),
             history_retention_days: 0,
             auto_check_updates: true,
+            bitsign_tenant_url: String::new(),
         }
     }
 }
@@ -77,6 +81,7 @@ pub fn load_settings(conn: &Connection) -> AppSettings {
         auto_check_updates: get_val(conn, "auto_check_updates")
             .map(|v| v == "true")
             .unwrap_or(defaults.auto_check_updates),
+        bitsign_tenant_url: get_val(conn, "bitsign_tenant_url").unwrap_or(defaults.bitsign_tenant_url),
     }
 }
 
@@ -89,6 +94,7 @@ fn save_settings(conn: &Connection, s: &AppSettings) -> rusqlite::Result<()> {
     set_val(conn, "default_output_dir", &s.default_output_dir)?;
     set_val(conn, "history_retention_days", &s.history_retention_days.to_string())?;
     set_val(conn, "auto_check_updates", if s.auto_check_updates { "true" } else { "false" })?;
+    set_val(conn, "bitsign_tenant_url", &s.bitsign_tenant_url)?;
     Ok(())
 }
 

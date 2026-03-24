@@ -102,8 +102,8 @@ export default function SignStepOne({ onFileSelected, session, onLogout }) {
             <div className="flex items-center gap-3 mb-4">
               <UserCircleIcon className="w-8 h-8 text-charcoal/20" />
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-charcoal truncate">{session?.email}</p>
-                <p className="text-[10px] text-charcoal/40 truncate">{session?.tenantName}</p>
+                <p className="text-xs font-semibold text-charcoal truncate">{session?.name || session?.email}</p>
+                <p className="text-[10px] text-charcoal/40 truncate">{session?.tenantSlug} · {session?.role}</p>
               </div>
             </div>
 

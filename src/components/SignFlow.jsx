@@ -7,6 +7,7 @@ import SignLogin from './sign/SignLogin'
 
 export default function SignFlow() {
   const [session, setSession] = useState(null)
+  const [tenantUrl, setTenantUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [step, setStep] = useState(1)
   const [data, setData] = useState({
@@ -22,6 +23,10 @@ export default function SignFlow() {
       setSession(s)
       setLoading(false)
     })
+    // Load tenant URL from settings
+    api.getSettings().then((s) => {
+      if (s?.bitsignTenantUrl) setTenantUrl(s.bitsignTenantUrl)
+    }).catch(() => {})
   }, [])
 
   const handleLogin = useCallback(async (apiUrl) => {
@@ -66,7 +71,7 @@ export default function SignFlow() {
   if (!session) {
     return (
       <div className="h-full flex flex-col px-16 pt-10 pb-8 max-w-3xl">
-        <SignLogin onLogin={handleLogin} />
+        <SignLogin onLogin={handleLogin} defaultUrl={tenantUrl} />
       </div>
     )
   }

@@ -12,7 +12,10 @@ use tauri::{Manager, State};
 #[serde(rename_all = "camelCase")]
 pub struct SignSession {
     pub email: String,
-    pub tenant_name: String,
+    pub name: String,
+    pub tenant_id: String,
+    pub tenant_slug: String,
+    pub role: String,
     pub access_token: String,
     pub refresh_token: String,
     pub api_url: String,
@@ -22,7 +25,9 @@ pub struct SignSession {
 #[serde(rename_all = "camelCase")]
 pub struct SignSessionInfo {
     pub email: String,
-    pub tenant_name: String,
+    pub name: String,
+    pub tenant_slug: String,
+    pub role: String,
     pub api_url: String,
     pub connected: bool,
 }
@@ -79,7 +84,7 @@ fn is_enabled(conn: &Connection) -> bool {
         .unwrap_or(false)
 }
 
-// ── OAuth2 PKCE helpers ────────────────────────────────────────────
+// ── OAuth2 PKCE ────────────────────────────────────────────────────
 
 fn generate_pkce() -> (String, String) {
     use rand::Rng;
@@ -100,29 +105,28 @@ fn generate_pkce() -> (String, String) {
     (verifier, challenge)
 }
 
-/// Start local HTTP server, open browser for OAuth2, wait for callback
+/// Start local HTTP server, open browser for OAuth2 PKCE, wait for callback
 async fn oauth2_pkce_flow(api_url: &str) -> Result<(String, String), String> {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     let (verifier, challenge) = generate_pkce();
 
-    // Bind to random port
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
         .map_err(|e| format!("Callback-Server starten fehlgeschlagen: {e}"))?;
     let port = listener.local_addr().map_err(|e| e.to_string())?.port();
     let redirect_uri = format!("http://localhost:{}/callback", port);
 
-    // Open browser to bit.SIGN login
+    // bit.SIGN OAuth2 authorize endpoint
     let auth_url = format!(
-        "{}/api/auth/authorize?client_id=bit-lock&redirect_uri={}&response_type=code&code_challenge={}&code_challenge_method=S256&scope=documents:*",
+        "{}/api/auth/oauth2/authorize?client_id=bit-lock&redirect_uri={}&response_type=code&code_challenge={}&code_challenge_method=S256&scope=documents:read%20documents:write%20documents:sign",
         api_url,
         urlencoding(&redirect_uri),
         challenge,
     );
     open::that(&auth_url).map_err(|e| format!("Browser öffnen fehlgeschlagen: {e}"))?;
 
-    // Wait for callback (max 120 seconds)
+    // Wait for callback (max 120s)
     let accept = tokio::time::timeout(
         std::time::Duration::from_secs(120),
         listener.accept(),
@@ -149,7 +153,7 @@ async fn oauth2_pkce_flow(api_url: &str) -> Result<(String, String), String> {
         })
         .ok_or("Kein Auth-Code im Callback erhalten")?;
 
-    // Send success response to browser
+    // Success page
     let html = "<html><body style='font-family:system-ui;text-align:center;padding:60px'><h2>Anmeldung erfolgreich</h2><p>Sie können dieses Fenster schließen und zurück zu bit.LOCK wechseln.</p></body></html>";
     let response = format!(
         "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
@@ -160,17 +164,17 @@ async fn oauth2_pkce_flow(api_url: &str) -> Result<(String, String), String> {
     Ok((code, verifier))
 }
 
-/// Exchange auth code for tokens
-async fn exchange_code(api_url: &str, code: &str, verifier: &str) -> Result<SignSession, String> {
+/// Exchange auth code for tokens — POST /api/auth/oauth2/token
+async fn exchange_code(api_url: &str, code: &str, verifier: &str) -> Result<(String, String), String> {
     let client = reqwest::Client::new();
     let resp = client
-        .post(format!("{}/api/auth/token", api_url))
-        .json(&serde_json::json!({
-            "grant_type": "authorization_code",
-            "code": code,
-            "code_verifier": verifier,
-            "client_id": "bit-lock",
-        }))
+        .post(format!("{}/api/auth/oauth2/token", api_url))
+        .form(&[
+            ("grant_type", "authorization_code"),
+            ("code", code),
+            ("code_verifier", verifier),
+            ("client_id", "bit-lock"),
+        ])
         .send()
         .await
         .map_err(|e| format!("Token-Austausch fehlgeschlagen: {e}"))?;
@@ -180,26 +184,53 @@ async fn exchange_code(api_url: &str, code: &str, verifier: &str) -> Result<Sign
         return Err(format!("Anmeldung fehlgeschlagen: {body}"));
     }
 
+    // Response: { access_token, token_type, expires_in, refresh_token, scope }
     let data: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
-    Ok(SignSession {
-        email: data["user"]["email"].as_str().unwrap_or("").to_string(),
-        tenant_name: data["user"]["tenantName"].as_str().unwrap_or("").to_string(),
-        access_token: data["accessToken"].as_str().unwrap_or("").to_string(),
-        refresh_token: data["refreshToken"].as_str().unwrap_or("").to_string(),
-        api_url: api_url.to_string(),
-    })
+    let access_token = data["access_token"].as_str().unwrap_or("").to_string();
+    let refresh_token = data["refresh_token"].as_str().unwrap_or("").to_string();
+
+    if access_token.is_empty() {
+        return Err("Kein access_token in Antwort".into());
+    }
+
+    Ok((access_token, refresh_token))
 }
 
-/// Refresh access token
-async fn refresh_token(session: &SignSession) -> Result<SignSession, String> {
+/// Fetch user info — GET /api/auth/oauth2/userinfo
+async fn fetch_userinfo(api_url: &str, access_token: &str) -> Result<(String, String, String, String, String), String> {
     let client = reqwest::Client::new();
     let resp = client
-        .post(format!("{}/api/auth/token", session.api_url))
-        .json(&serde_json::json!({
-            "grant_type": "refresh_token",
-            "refresh_token": session.refresh_token,
-            "client_id": "bit-lock",
-        }))
+        .get(format!("{}/api/auth/oauth2/userinfo", api_url))
+        .header("Authorization", format!("Bearer {}", access_token))
+        .send()
+        .await
+        .map_err(|e| format!("UserInfo abrufen fehlgeschlagen: {e}"))?;
+
+    if !resp.status().is_success() {
+        return Err("UserInfo nicht verfügbar".into());
+    }
+
+    // Response: { sub, name, email, tenantId, tenantSlug, role, authMethod }
+    let data: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+    Ok((
+        data["email"].as_str().unwrap_or("").to_string(),
+        data["name"].as_str().unwrap_or("").to_string(),
+        data["tenantId"].as_str().unwrap_or("").to_string(),
+        data["tenantSlug"].as_str().unwrap_or("").to_string(),
+        data["role"].as_str().unwrap_or("").to_string(),
+    ))
+}
+
+/// Refresh access token — POST /api/auth/oauth2/token
+async fn do_refresh_token(api_url: &str, refresh_token: &str) -> Result<(String, String), String> {
+    let client = reqwest::Client::new();
+    let resp = client
+        .post(format!("{}/api/auth/oauth2/token", api_url))
+        .form(&[
+            ("grant_type", "refresh_token"),
+            ("refresh_token", refresh_token),
+            ("client_id", "bit-lock"),
+        ])
         .send()
         .await
         .map_err(|e| format!("Token-Refresh fehlgeschlagen: {e}"))?;
@@ -209,19 +240,13 @@ async fn refresh_token(session: &SignSession) -> Result<SignSession, String> {
     }
 
     let data: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
-    Ok(SignSession {
-        email: session.email.clone(),
-        tenant_name: session.tenant_name.clone(),
-        access_token: data["accessToken"].as_str().unwrap_or("").to_string(),
-        refresh_token: data["refreshToken"]
-            .as_str()
-            .unwrap_or(&session.refresh_token)
-            .to_string(),
-        api_url: session.api_url.clone(),
-    })
+    Ok((
+        data["access_token"].as_str().unwrap_or("").to_string(),
+        data["refresh_token"].as_str().unwrap_or("").to_string(),
+    ))
 }
 
-/// Make authenticated API request with auto-refresh
+/// Make authenticated API request with auto-refresh on 401
 async fn api_request(
     db: &Mutex<Connection>,
     machine_key: &[u8; 32],
@@ -237,39 +262,50 @@ async fn api_request(
     let client = reqwest::Client::new();
     let url = format!("{}{}", session.api_url, path);
 
-    let mut req = match method {
-        "POST" => client.post(&url),
-        _ => client.get(&url),
-    };
-    req = req.header("Authorization", format!("Bearer {}", session.access_token));
-    if let Some(b) = &body {
-        req = req.json(b);
-    }
-
-    let resp = req.send().await.map_err(|e| e.to_string())?;
+    let resp = send_request(&client, method, &url, &session.access_token, body.as_ref()).await?;
 
     // Auto-refresh on 401
     if resp.status().as_u16() == 401 {
-        let new_session = refresh_token(&session).await?;
+        let (new_access, new_refresh) =
+            do_refresh_token(&session.api_url, &session.refresh_token).await?;
+
+        let new_session = SignSession {
+            access_token: new_access.clone(),
+            refresh_token: if new_refresh.is_empty() {
+                session.refresh_token.clone()
+            } else {
+                new_refresh
+            },
+            ..session.clone()
+        };
         {
             let conn = db.lock().map_err(|e| e.to_string())?;
             save_session(&conn, machine_key, &new_session)?;
         }
 
-        let mut req2 = match method {
-            "POST" => client.post(&url),
-            _ => client.get(&url),
-        };
-        req2 = req2.header("Authorization", format!("Bearer {}", new_session.access_token));
-        if let Some(b) = body {
-            req2 = req2.json(&b);
-        }
-
-        let resp2 = req2.send().await.map_err(|e| e.to_string())?;
+        let resp2 = send_request(&client, method, &url, &new_access, body.as_ref()).await?;
         return Ok((resp2, new_session));
     }
 
     Ok((resp, session))
+}
+
+async fn send_request(
+    client: &reqwest::Client,
+    method: &str,
+    url: &str,
+    token: &str,
+    body: Option<&serde_json::Value>,
+) -> Result<reqwest::Response, String> {
+    let mut req = match method {
+        "POST" => client.post(url),
+        _ => client.get(url),
+    };
+    req = req.header("Authorization", format!("Bearer {}", token));
+    if let Some(b) = body {
+        req = req.json(b);
+    }
+    req.send().await.map_err(|e| e.to_string())
 }
 
 fn urlencoding(s: &str) -> String {
@@ -286,7 +322,6 @@ fn urlencoding(s: &str) -> String {
 
 // ── Tauri Commands ─────────────────────────────────────────────────
 
-/// Check if bit.SIGN is enabled and user is logged in
 #[tauri::command]
 pub fn bitsign_status(
     db: State<'_, Mutex<Connection>>,
@@ -298,13 +333,14 @@ pub fn bitsign_status(
     }
     Ok(load_session(&conn, &machine_key.0).map(|s| SignSessionInfo {
         email: s.email,
-        tenant_name: s.tenant_name,
+        name: s.name,
+        tenant_slug: s.tenant_slug,
+        role: s.role,
         api_url: s.api_url,
         connected: true,
     }))
 }
 
-/// Enable/disable bit.SIGN integration
 #[tauri::command]
 pub fn bitsign_set_enabled(
     db: State<'_, Mutex<Connection>>,
@@ -314,20 +350,34 @@ pub fn bitsign_set_enabled(
     save_enabled(&conn, enabled)
 }
 
-/// Start OAuth2 PKCE login flow — opens browser
+/// OAuth2 PKCE login — opens browser, waits for callback, exchanges code, fetches userinfo
 #[tauri::command]
 pub async fn bitsign_login(
     db: State<'_, Mutex<Connection>>,
     machine_key: State<'_, MachineKey>,
     api_url: String,
 ) -> Result<SignSessionInfo, String> {
-    // 1. OAuth2 PKCE: open browser, wait for callback
+    // 1. PKCE flow: browser → callback → auth code
     let (code, verifier) = oauth2_pkce_flow(&api_url).await?;
 
     // 2. Exchange code for tokens
-    let session = exchange_code(&api_url, &code, &verifier).await?;
+    let (access_token, refresh_token) = exchange_code(&api_url, &code, &verifier).await?;
 
-    // 3. Store session encrypted
+    // 3. Fetch user info
+    let (email, name, tenant_id, tenant_slug, role) =
+        fetch_userinfo(&api_url, &access_token).await?;
+
+    // 4. Store session encrypted
+    let session = SignSession {
+        email: email.clone(),
+        name: name.clone(),
+        tenant_id,
+        tenant_slug: tenant_slug.clone(),
+        role: role.clone(),
+        access_token,
+        refresh_token,
+        api_url: api_url.clone(),
+    };
     {
         let conn = db.lock().map_err(|e| e.to_string())?;
         save_session(&conn, &machine_key.0, &session)?;
@@ -335,14 +385,15 @@ pub async fn bitsign_login(
     }
 
     Ok(SignSessionInfo {
-        email: session.email,
-        tenant_name: session.tenant_name,
-        api_url: session.api_url,
+        email,
+        name,
+        tenant_slug,
+        role,
+        api_url,
         connected: true,
     })
 }
 
-/// Logout — delete session
 #[tauri::command]
 pub fn bitsign_logout(
     db: State<'_, Mutex<Connection>>,
@@ -351,7 +402,7 @@ pub fn bitsign_logout(
     delete_session(&conn)
 }
 
-/// Sign a PDF — sends only the hash to bit.SIGN
+/// Sign a PDF — computes hash locally, sends only hash to bit.SIGN
 #[tauri::command]
 pub async fn bitsign_sign_pdf(
     app: tauri::AppHandle,
@@ -360,7 +411,7 @@ pub async fn bitsign_sign_pdf(
     input_path: String,
     reason: String,
 ) -> Result<SignResult, String> {
-    // 1. Read PDF and compute hash
+    // 1. Read PDF and compute hash locally
     let pdf_bytes = std::fs::read(&input_path)
         .map_err(|e| format!("PDF lesen fehlgeschlagen: {e}"))?;
     let file_name = std::path::Path::new(&input_path)
@@ -369,7 +420,7 @@ pub async fn bitsign_sign_pdf(
         .unwrap_or("dokument.pdf");
     let hash = hex::encode(Sha256::digest(&pdf_bytes));
 
-    // 2. Create signing request at bit.SIGN (only hash + metadata)
+    // 2. Create signing request (only hash + metadata, NEVER the PDF)
     let (resp, _session) = api_request(
         &db,
         &machine_key.0,
@@ -392,7 +443,7 @@ pub async fn bitsign_sign_pdf(
     let data: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
     let document_id = data["id"].as_str().unwrap_or("unknown").to_string();
 
-    // 3. Download signed PDF (if immediately available)
+    // 3. Try to download signed PDF (if immediately available)
     let signed_bytes = {
         let (dl_resp, _) = api_request(
             &db,
@@ -405,7 +456,6 @@ pub async fn bitsign_sign_pdf(
         if dl_resp.status().is_success() {
             dl_resp.bytes().await.map(|b| b.to_vec()).unwrap_or(pdf_bytes.clone())
         } else {
-            // Not yet signed — save original with pending status
             pdf_bytes.clone()
         }
     };
@@ -421,7 +471,6 @@ pub async fn bitsign_sign_pdf(
 
     std::fs::write(&signed_path, &signed_bytes).map_err(|e| e.to_string())?;
 
-    // Set read-only
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;

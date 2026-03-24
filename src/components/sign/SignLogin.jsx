@@ -5,8 +5,8 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
 
-export default function SignLogin({ onLogin }) {
-  const [apiUrl, setApiUrl] = useState('https://sign.birklein.de')
+export default function SignLogin({ onLogin, defaultUrl }) {
+  const [apiUrl, setApiUrl] = useState(defaultUrl || '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -14,7 +14,15 @@ export default function SignLogin({ onLogin }) {
     setLoading(true)
     setError(null)
     try {
-      await onLogin(apiUrl)
+      // Auto-prefix https:// and auto-suffix .bitsign.cloud
+      let url = apiUrl.trim()
+      if (!url.includes('.') && url.length > 0) {
+        url = `${url}.bitsign.cloud`
+      }
+      if (!url.startsWith('http')) {
+        url = `https://${url}`
+      }
+      await onLogin(url)
     } catch (err) {
       setError(String(err))
     }

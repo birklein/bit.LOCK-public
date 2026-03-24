@@ -23,10 +23,14 @@ export default function SettingsView() {
   const [saved, setSaved] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
   const [signStatus, setSignStatus] = useState(null)
-  const [signToggling, setSignToggling] = useState(false)
+  const [signTenantUrl, setSignTenantUrl] = useState('')
 
   useEffect(() => {
-    api.getSettings().then(setSettings)
+    api.getSettings().then((s) => {
+      setSettings(s)
+      // Load saved tenant URL from settings
+      if (s?.bitsignTenantUrl) setSignTenantUrl(s.bitsignTenantUrl)
+    })
     api.bitsignStatus().then(setSignStatus).catch(() => {})
   }, [])
 
@@ -168,14 +172,23 @@ export default function SettingsView() {
 
       {/* bit.SIGN Integration */}
       <Section icon={FingerPrintIcon} title="bit.SIGN Integration" className="mt-6">
-        <Field label="Digitale Signaturen" hint="Verbindung mit bit.SIGN für rechtsgültige Signaturen">
+        <Field label="bit.SIGN Tenant-Adresse" hint="Format: ihrefirma.bitsign.cloud">
+          <input
+            type="url"
+            value={signTenantUrl}
+            onChange={(e) => setSignTenantUrl(e.target.value)}
+            placeholder="ihrefirma.bitsign.cloud"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-surface text-xs text-charcoal placeholder-charcoal/25 focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-0"
+          />
+        </Field>
+        <Field label="Digitale Signaturen">
           <div className="flex items-center justify-between">
             <div>
               {signStatus ? (
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-success" />
                   <span className="text-xs text-charcoal/60">
-                    Verbunden als {signStatus.email}
+                    Verbunden als {signStatus.name || signStatus.email}
                   </span>
                 </div>
               ) : (
@@ -185,7 +198,6 @@ export default function SettingsView() {
             <Toggle
               checked={!!signStatus}
               onChange={async (enabled) => {
-                setSignToggling(true)
                 if (!enabled && signStatus) {
                   await api.bitsignLogout()
                   await api.bitsignSetEnabled(false)
@@ -193,7 +205,6 @@ export default function SettingsView() {
                 } else {
                   await api.bitsignSetEnabled(true)
                 }
-                setSignToggling(false)
               }}
             />
           </div>
@@ -201,14 +212,14 @@ export default function SettingsView() {
         {signStatus && (
           <Field label="Account">
             <div className="bg-surface rounded-xl p-3 space-y-1">
-              <p className="text-xs text-charcoal">{signStatus.email}</p>
-              <p className="text-[10px] text-charcoal/40">{signStatus.tenantName} · {signStatus.apiUrl}</p>
+              <p className="text-xs text-charcoal">{signStatus.name || signStatus.email}</p>
+              <p className="text-[10px] text-charcoal/40">{signStatus.tenantSlug} · {signStatus.role} · {signStatus.apiUrl}</p>
             </div>
           </Field>
         )}
         <p className="text-[10px] text-charcoal/25 leading-relaxed">
           Wenn aktiviert, erscheint "Signieren" in der Navigation.
-          Die Anmeldung erfolgt sicher über den Browser (OAuth2).
+          Die Anmeldung erfolgt sicher über den Browser (OAuth2 PKCE).
         </p>
       </Section>
 
