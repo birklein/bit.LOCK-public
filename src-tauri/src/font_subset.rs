@@ -1,4 +1,4 @@
-use lopdf::{Document, Object, ObjectId, Stream};
+use lopdf::{Document, Object, ObjectId};
 use std::collections::{HashMap, HashSet};
 
 /// Info about an embedded font in the PDF
@@ -22,6 +22,7 @@ enum FontType {
 }
 
 /// Result of font subsetting for a single font
+#[allow(dead_code)]
 pub struct SubsetResult {
     pub font_name: String,
     pub original_bytes: usize,
