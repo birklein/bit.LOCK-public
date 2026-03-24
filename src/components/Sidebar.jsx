@@ -1,6 +1,7 @@
 import {
   LockClosedIcon,
   ArrowsPointingInIcon,
+  DocumentDuplicateIcon,
   FingerPrintIcon,
   ClockIcon,
   Cog6ToothIcon,
@@ -11,6 +12,7 @@ export default function Sidebar({ activeView, onNavigate, signEnabled }) {
   const navItems = [
     { id: 'encrypt', label: 'Verschlüsseln', icon: LockClosedIcon },
     { id: 'compress', label: 'Komprimieren', icon: ArrowsPointingInIcon },
+    { id: 'merge', label: 'Zusammenführen', icon: DocumentDuplicateIcon },
     ...(signEnabled ? [{ id: 'sign', label: 'Signieren', icon: FingerPrintIcon }] : []),
     { id: 'history', label: 'Verlauf', icon: ClockIcon },
   ]

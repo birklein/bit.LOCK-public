@@ -13,6 +13,11 @@ export const api = {
   analyzePdf: (inputPath) => invoke('analyze_pdf', { inputPath }),
   compressPdf: (params) => invoke('compress_pdf', params),
   selectCompressSavePath: (originalName) => invoke('select_compress_save_path', { originalName }),
+  // Merge + Print
+  selectMultiplePdfs: () => invoke('select_multiple_pdfs'),
+  mergePdfs: (params) => invoke('merge_pdfs', params),
+  selectMergeSavePath: () => invoke('select_merge_save_path'),
+  printPdf: (filePath) => invoke('print_pdf', { filePath }),
   // bit.SIGN
   bitsignStatus: () => invoke('bitsign_status'),
   bitsignSetEnabled: (enabled) => invoke('bitsign_set_enabled', { enabled }),

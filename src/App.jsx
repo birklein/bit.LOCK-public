@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import WizardFlow from './components/WizardFlow'
 import CompressFlow from './components/CompressFlow'
+import MergeFlow from './components/MergeFlow'
 import SignFlow from './components/SignFlow'
 import HistoryView from './components/HistoryView'
 import SettingsView from './components/SettingsView'
@@ -11,6 +12,7 @@ import { api } from './api'
 const VIEWS = {
   ENCRYPT: 'encrypt',
   COMPRESS: 'compress',
+  MERGE: 'merge',
   SIGN: 'sign',
   HISTORY: 'history',
   SETTINGS: 'settings',
@@ -21,19 +23,18 @@ export default function App() {
   const [preselectedFile, setPreselectedFile] = useState(null)
   const [signEnabled, setSignEnabled] = useState(false)
 
-  // Check if bit.SIGN is enabled
   useEffect(() => {
     api.bitsignStatus().then((s) => setSignEnabled(!!s)).catch(() => {})
-  }, [view]) // Re-check when view changes (e.g. after enabling in settings)
-
-  const handleNewEncrypt = useCallback(() => {
-    setPreselectedFile(null)
-    setView(VIEWS.ENCRYPT)
-  }, [])
+  }, [view])
 
   const handleGoToEncrypt = useCallback((filePath, fileName) => {
     setPreselectedFile({ path: filePath, name: fileName })
     setView(VIEWS.ENCRYPT)
+  }, [])
+
+  const handleGoToCompress = useCallback((filePath, fileName) => {
+    // TODO: preselect file in compress flow
+    setView(VIEWS.COMPRESS)
   }, [])
 
   return (
@@ -58,11 +59,17 @@ export default function App() {
           {view === VIEWS.COMPRESS && (
             <CompressFlow onGoToEncrypt={handleGoToEncrypt} />
           )}
+          {view === VIEWS.MERGE && (
+            <MergeFlow
+              onGoToEncrypt={handleGoToEncrypt}
+              onGoToCompress={handleGoToCompress}
+            />
+          )}
           {view === VIEWS.SIGN && (
             <SignFlow />
           )}
           {view === VIEWS.HISTORY && (
-            <HistoryView onNewEncrypt={handleNewEncrypt} />
+            <HistoryView onNewEncrypt={() => { setPreselectedFile(null); setView(VIEWS.ENCRYPT) }} />
           )}
           {view === VIEWS.SETTINGS && (
             <SettingsView />

@@ -1,6 +1,7 @@
 mod compress;
 mod crypto;
 mod font_subset;
+mod merge;
 mod sign;
 mod database;
 mod encryption;
@@ -55,6 +56,10 @@ pub fn run() {
             compress::analyze_pdf,
             compress::compress_pdf,
             compress::select_compress_save_path,
+            merge::merge_pdfs,
+            merge::select_multiple_pdfs,
+            merge::select_merge_save_path,
+            merge::print_pdf,
             sign::bitsign_status,
             sign::bitsign_set_enabled,
             sign::bitsign_login,
