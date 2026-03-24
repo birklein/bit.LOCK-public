@@ -110,13 +110,21 @@ pub async fn select_multiple_pdfs(app: tauri::AppHandle) -> Result<Vec<String>, 
 }
 
 #[tauri::command]
-pub async fn select_merge_save_path(app: tauri::AppHandle) -> Result<Option<String>, String> {
+pub async fn select_merge_save_path(
+    app: tauri::AppHandle,
+    suggested_name: String,
+) -> Result<Option<String>, String> {
     use tauri_plugin_dialog::DialogExt;
+    let file_name = if suggested_name.is_empty() {
+        "zusammengefuehrt.pdf".to_string()
+    } else {
+        suggested_name
+    };
     let path = app
         .dialog()
         .file()
         .set_title("Zusammengeführtes PDF speichern")
-        .set_file_name("zusammengefuehrt.pdf")
+        .set_file_name(&file_name)
         .add_filter("PDF-Dateien", &["pdf"])
         .blocking_save_file();
     match path {

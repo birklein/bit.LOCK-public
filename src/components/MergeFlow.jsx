@@ -61,7 +61,11 @@ export default function MergeFlow({ onGoToEncrypt, onGoToCompress }) {
   }
 
   const handleMerge = async () => {
-    const savePath = await api.selectMergeSavePath()
+    const names = files.map((f) => f.name.replace(/\.pdf$/i, ''))
+    const suggested = names.length <= 3
+      ? names.join('_') + '.pdf'
+      : names[0] + '_und_' + (names.length - 1) + '_weitere.pdf'
+    const savePath = await api.selectMergeSavePath(suggested)
     if (!savePath) return
     setMerging(true)
     setError(null)

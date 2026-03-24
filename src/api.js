@@ -16,7 +16,7 @@ export const api = {
   // Merge + Print
   selectMultiplePdfs: () => invoke('select_multiple_pdfs'),
   mergePdfs: (params) => invoke('merge_pdfs', params),
-  selectMergeSavePath: () => invoke('select_merge_save_path'),
+  selectMergeSavePath: (suggestedName) => invoke('select_merge_save_path', { suggestedName }),
   printPdf: (filePath) => invoke('print_pdf', { filePath }),
   // bit.SIGN
   bitsignStatus: () => invoke('bitsign_status'),
