@@ -28,9 +28,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build frontend
-        run: npm run build
-
       - name: Build Tauri app
         run: npx tauri build
         env:
@@ -72,9 +69,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-
-      - name: Build frontend
-        run: npm run build
 
       - name: Build Tauri app
         run: npx tauri build
