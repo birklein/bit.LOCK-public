@@ -20,6 +20,7 @@
   "devDependencies": {
     "@fontsource/ubuntu": "^5.0.0",
     "@fontsource/ubuntu-mono": "^5.0.0",
+    "@tauri-apps/cli": "^2.10.1",
     "@vitejs/plugin-react": "^4",
     "autoprefixer": "^10",
     "postcss": "^8",
