@@ -43,3 +43,7 @@ Thumbs.db
 *.msi
 *.exe
 *.nsis
+
+# AI agent config (bleibt lokal)
+.claude/
+CLAUDE.md
