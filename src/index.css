@@ -1,0 +1,75 @@
+@import '@fontsource/ubuntu/300.css';
+@import '@fontsource/ubuntu/400.css';
+@import '@fontsource/ubuntu/500.css';
+@import '@fontsource/ubuntu/700.css';
+@import '@fontsource/ubuntu-mono/400.css';
+@import '@fontsource/ubuntu-mono/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #FFFBF5;
+  font-family: 'Ubuntu', sans-serif;
+  color: #1C1917;
+}
+
+/* Scrollbar — minimal, warm */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D8C3AD40; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #D8C3AD; }
+
+/* Password monospace */
+.font-password {
+  font-family: 'Ubuntu Mono', monospace;
+  letter-spacing: 0.12em;
+}
+
+/* Drag region for frameless window */
+.drag-region { -webkit-app-region: drag; }
+.no-drag { -webkit-app-region: no-drag; }
+
+/* Drop zone — animated dashed border */
+@keyframes borderDance {
+  0% { background-position: 0 0, 100% 0, 100% 100%, 0 100%; }
+  100% { background-position: 100% 0, 100% 100%, 0 100%, 0 0; }
+}
+
+.drop-zone-active {
+  background-image:
+    linear-gradient(90deg, #F59E0B 50%, transparent 50%),
+    linear-gradient(180deg, #F59E0B 50%, transparent 50%),
+    linear-gradient(90deg, #F59E0B 50%, transparent 50%),
+    linear-gradient(180deg, #F59E0B 50%, transparent 50%);
+  background-size: 12px 2px, 2px 12px, 12px 2px, 2px 12px;
+  background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+  background-repeat: repeat-x, repeat-y, repeat-x, repeat-y;
+  animation: borderDance 0.4s infinite linear;
+}
+
+/* Lock animation */
+@keyframes lockClose {
+  0% { transform: translateY(-8px); opacity: 0.4; }
+  60% { transform: translateY(2px); }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.lock-close {
+  animation: lockClose 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}

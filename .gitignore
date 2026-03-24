@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+out/
+src-tauri/target/
+
+# Tauri generated
+src-tauri/gen/
+
+# Signing keys — NIEMALS committen
+src-tauri/.tauri-update-key
+src-tauri/.tauri-update-key.pub
+*.pem
+*.key
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# SQLite databases (enthalten Passwoerter)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Crash reports
+*.dmp
+
+# Installer output
+*.dmg
+*.msi
+*.exe
+*.nsis
