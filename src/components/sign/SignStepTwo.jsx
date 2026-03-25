@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   DocumentIcon,
   FingerPrintIcon,
@@ -18,6 +18,18 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
   const [reason, setReason] = useState('approved')
   const [customReason, setCustomReason] = useState('')
   const [signing, setSigning] = useState(false)
+  const [elapsed, setElapsed] = useState(0)
+  const timerRef = useRef(null)
+
+  useEffect(() => {
+    if (signing) {
+      setElapsed(0)
+      timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000)
+    } else {
+      clearInterval(timerRef.current)
+    }
+    return () => clearInterval(timerRef.current)
+  }, [signing])
 
   const effectiveReason = reason === 'custom'
     ? customReason
@@ -87,10 +99,10 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
           <div className="mt-4 flex items-start gap-2.5 bg-amber-50 rounded-xl p-4 animate-fade-up" style={{ animationDelay: '80ms' }}>
             <ShieldCheckIcon className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-semibold text-charcoal">Zero-Knowledge Signatur</p>
+              <p className="text-xs font-semibold text-charcoal">Sichere Signatur</p>
               <p className="text-[11px] text-charcoal/50 mt-1 leading-relaxed">
-                Nur der SHA-256 Hash Ihres Dokuments wird an bit.SIGN übermittelt.
-                Das PDF selbst verlässt niemals Ihr Gerät.
+                Ihr PDF wird verschlüsselt an bit.SIGN übertragen und dort
+                mit einem rechtsgültigen Zertifikat digital signiert.
               </p>
             </div>
           </div>
@@ -124,7 +136,7 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
           {signing ? (
             <>
               <ArrowPathIcon className="w-4 h-4 animate-spin" />
-              Wird signiert…
+              Signierung läuft… {elapsed}s
             </>
           ) : (
             <>

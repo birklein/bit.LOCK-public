@@ -430,16 +430,23 @@ pub async fn bitsign_sign_pdf(
         load_session(&conn, &machine_key.0).ok_or("Nicht bei bit.SIGN angemeldet")?
     };
 
-    let document_id = upload_pdf_multipart(&session, &pdf_bytes, &file_name, &reason).await?;
+    let upload = upload_pdf_multipart(&session, &pdf_bytes, &file_name, &reason).await?;
+    let document_id = upload.document_id;
 
-    // 3. Poll for signing completion (max 60s)
+    // 3. Open DocuSeal signing page in browser (user must sign there)
+    if let Some(slug) = &upload.signing_slug {
+        // Use bit.SIGN's public DocuSeal URL (same domain, /s/ path)
+        let signing_url = format!("{}/s/{}", session.api_url, slug);
+        open::that(&signing_url).ok();
+    }
+
+    // 4. Poll for signing completion (max 120s)
     let status = poll_document_status(&db, &machine_key.0, &document_id).await?;
 
-    // 4. Download signed PDF if completed
+    // 5. Download signed PDF if completed
     let signed_bytes = if status == "COMPLETED" {
         download_signed_pdf(&db, &machine_key.0, &document_id).await?
     } else {
-        // Not yet completed — return document ID so user can check later
         return Ok(SignResult {
             document_id,
             status,
@@ -498,12 +505,17 @@ pub async fn bitsign_save_signed(
 
 // ── Multipart upload ──────────────────────────────────────────────
 
+struct UploadResult {
+    document_id: String,
+    signing_slug: Option<String>,
+}
+
 async fn upload_pdf_multipart(
     session: &SignSession,
     pdf_bytes: &[u8],
     file_name: &str,
     reason: &str,
-) -> Result<String, String> {
+) -> Result<UploadResult, String> {
     let client = reqwest::Client::new();
     let url = format!("{}/api/v1/documents", session.api_url);
 
@@ -530,9 +542,18 @@ async fn upload_pdf_multipart(
     }
 
     let data: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
-    data["id"].as_str()
+    let document_id = data["id"].as_str()
         .map(|s| s.to_string())
-        .ok_or("Keine Dokument-ID in Antwort".into())
+        .ok_or("Keine Dokument-ID in Antwort")?;
+
+    // Extract signing slug from first submitter (for opening signing URL)
+    let signing_slug = data["submitters"]
+        .as_array()
+        .and_then(|arr| arr.first())
+        .and_then(|s| s["slug"].as_str())
+        .map(|s| s.to_string());
+
+    Ok(UploadResult { document_id, signing_slug })
 }
 
 // ── Polling ───────────────────────────────────────────────────────
@@ -542,7 +563,7 @@ async fn poll_document_status(
     machine_key: &[u8; 32],
     document_id: &str,
 ) -> Result<String, String> {
-    let max_polls = 30; // 30 * 2s = 60s
+    let max_polls = 60; // 60 * 2s = 120s
     for _ in 0..max_polls {
         let (resp, _) = api_request(
             db,

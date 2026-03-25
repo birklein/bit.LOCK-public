@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { save } from '@tauri-apps/plugin-dialog'
+import { openUrl } from '@tauri-apps/plugin-opener'
 import { api } from '../../api'
 import {
   CheckCircleIcon,
@@ -40,7 +41,7 @@ export default function SignStepThree({ data, onReset }) {
   const handleOpenInBitSign = () => {
     if (!result?.documentId || !result?.apiUrl) return
     const url = `${result.apiUrl}/documents/${result.documentId}`
-    window.__TAURI__?.opener?.openUrl?.(url) ?? window.open(url, '_blank')
+    openUrl(url)
   }
 
   if (isPending) {
