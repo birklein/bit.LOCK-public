@@ -5,7 +5,7 @@ import SignStepTwo from './sign/SignStepTwo'
 import SignStepThree from './sign/SignStepThree'
 import SignLogin from './sign/SignLogin'
 
-export default function SignFlow() {
+export default function SignFlow({ onConnected }) {
   const [session, setSession] = useState(null)
   const [tenantUrl, setTenantUrl] = useState('')
   const [loading, setLoading] = useState(true)
@@ -32,6 +32,7 @@ export default function SignFlow() {
   const handleLogin = useCallback(async (apiUrl) => {
     const s = await api.bitsignLogin(apiUrl)
     setSession(s)
+    onConnected?.()
     return s
   }, [])
 

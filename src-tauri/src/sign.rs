@@ -115,12 +115,12 @@ async fn oauth2_pkce_flow(api_url: &str) -> Result<(String, String), String> {
     const CALLBACK_PORT: u16 = 13579;
     let listener = tokio::net::TcpListener::bind(("127.0.0.1", CALLBACK_PORT))
         .await
-        .map_err(|e| format!("Callback-Server starten fehlgeschlagen: {e}"))?;
+        .map_err(|_| "Anmeldung läuft bereits — bitte warten oder bit.LOCK neu starten".to_string())?;
     let redirect_uri = format!("http://localhost:{}/callback", CALLBACK_PORT);
 
     // bit.SIGN OAuth2 authorize endpoint
     let auth_url = format!(
-        "{}/api/auth/oauth2/authorize?client_id=bit-lock&redirect_uri={}&response_type=code&code_challenge={}&code_challenge_method=S256&scope=documents:read%20documents:write%20documents:sign",
+        "{}/api/auth/oauth2/authorize?client_id=bit-lock&redirect_uri={}&response_type=code&code_challenge={}&code_challenge_method=S256&scope=openid%20profile%20email%20offline_access%20documents:read%20documents:write%20documents:sign",
         api_url,
         urlencoding(&redirect_uri),
         challenge,
@@ -175,6 +175,7 @@ async fn exchange_code(api_url: &str, code: &str, verifier: &str) -> Result<(Str
             ("code", code),
             ("code_verifier", verifier),
             ("client_id", "bit-lock"),
+            ("redirect_uri", &format!("http://localhost:13579/callback")),
         ])
         .send()
         .await
@@ -208,7 +209,7 @@ async fn fetch_userinfo(api_url: &str, access_token: &str) -> Result<(String, St
         .map_err(|e| format!("UserInfo abrufen fehlgeschlagen: {e}"))?;
 
     if !resp.status().is_success() {
-        return Err("UserInfo nicht verfügbar".into());
+        return Err("UserInfo nicht verfügbar — bitte erneut anmelden".into());
     }
 
     // Response: { sub, name, email, tenantId, tenantSlug, role, authMethod }

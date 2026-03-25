@@ -66,7 +66,7 @@ export default function App() {
             />
           )}
           {view === VIEWS.SIGN && (
-            <SignFlow />
+            <SignFlow onConnected={() => setSignEnabled(true)} />
           )}
           {view === VIEWS.HISTORY && (
             <HistoryView onNewEncrypt={() => { setPreselectedFile(null); setView(VIEWS.ENCRYPT) }} />
