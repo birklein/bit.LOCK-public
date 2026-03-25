@@ -16,7 +16,6 @@ import {
 export default function SignStepThree({ data, onReset }) {
   const { result } = data
   const [savedPath, setSavedPath] = useState(null)
-  const isCompleted = result?.status === 'COMPLETED'
   const isPending = result?.status === 'PENDING'
 
   const handleSaveAs = async () => {
@@ -38,10 +37,14 @@ export default function SignStepThree({ data, onReset }) {
     api.openPdfMail({ recipient: '', filePath, fileName })
   }
 
-  const handleOpenInBitSign = () => {
+  const handleOpenInBitSign = async () => {
     if (!result?.documentId || !result?.apiUrl) return
-    const url = `${result.apiUrl}/documents/${result.documentId}`
-    openUrl(url)
+    try {
+      await openUrl(`${result.apiUrl}/documents/${result.documentId}`)
+    } catch {
+      // Fallback: open crate im Backend nutzen
+      window.open(`${result.apiUrl}/documents/${result.documentId}`, '_blank')
+    }
   }
 
   if (isPending) {
@@ -51,11 +54,11 @@ export default function SignStepThree({ data, onReset }) {
           <ClockIcon className="w-8 h-8 text-amber-600 animate-pulse" />
         </div>
         <h1 className="text-2xl font-bold text-charcoal tracking-tight">
-          Signierung laeuft
+          Signierung läuft
         </h1>
         <p className="mt-3 text-charcoal/40 text-[13px] leading-relaxed">
-          Das Dokument wird von bit.SIGN verarbeitet. Sie koennen den Status
-          in bit.SIGN verfolgen oder spaeter zurueckkehren.
+          Das Dokument wird von bit.SIGN verarbeitet. Sie können den Status
+          in bit.SIGN verfolgen oder später zurückkehren.
         </p>
         <div className="mt-8 space-y-3 w-full">
           <button
@@ -63,7 +66,7 @@ export default function SignStepThree({ data, onReset }) {
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold shadow-golden transition-all duration-200"
           >
             <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-            In bit.SIGN oeffnen
+            In bit.SIGN öffnen
           </button>
           <button
             onClick={onReset}
@@ -89,7 +92,7 @@ export default function SignStepThree({ data, onReset }) {
           </h1>
           <p className="mt-3 text-charcoal/40 text-[13px] leading-relaxed max-w-md animate-fade-up">
             Ihr Dokument wurde digital signiert. Speichern Sie die
-            rechtsgueltig signierte Kopie an einem sicheren Ort.
+            rechtsgültig signierte Kopie an einem sicheren Ort.
           </p>
 
           {/* Signatur-Details */}
@@ -110,7 +113,7 @@ export default function SignStepThree({ data, onReset }) {
             </div>
           </div>
 
-          {/* Primaere Aktionen */}
+          {/* Primäre Aktionen */}
           <div className="mt-4 grid grid-cols-2 gap-3 animate-fade-up" style={{ animationDelay: '120ms' }}>
             <button
               onClick={handleSaveAs}
@@ -146,7 +149,7 @@ export default function SignStepThree({ data, onReset }) {
           )}
 
           <p className="mt-2 text-[10px] text-charcoal/30 animate-fade-up" style={{ animationDelay: '130ms' }}>
-            Hinweis: Unter macOS und Outlook muss der Anhang manuell zur E-Mail hinzugefuegt werden.
+            Hinweis: Unter macOS und Outlook muss der Anhang manuell zur E-Mail hinzugefügt werden.
           </p>
 
           {/* Weitere Signaturen anfordern */}
@@ -155,19 +158,19 @@ export default function SignStepThree({ data, onReset }) {
               <div className="flex items-center gap-2 mb-2">
                 <UsersIcon className="w-4 h-4 text-charcoal/30" />
                 <span className="text-[10px] font-bold tracking-[0.12em] uppercase text-charcoal/40">
-                  Weitere Unterschriften benoetigt?
+                  Weitere Unterschriften benötigt?
                 </span>
               </div>
               <p className="text-xs text-charcoal/40 leading-relaxed mb-3">
-                Fordern Sie ueber bit.SIGN weitere Signaturteilnehmer an —
-                z.B. Geschaeftsfuehrer, Vertragspartner oder Genehmiger.
+                Fordern Sie über bit.SIGN weitere Signaturteilnehmer an —
+                z.B. Geschäftsführer, Vertragspartner oder Genehmiger.
               </p>
               <button
                 onClick={handleOpenInBitSign}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface hover:bg-surface-mid/50 transition-colors text-xs font-medium text-charcoal/50 hover:text-charcoal/70"
               >
                 <UsersIcon className="w-3.5 h-3.5" />
-                In bit.SIGN oeffnen und Teilnehmer einladen
+                In bit.SIGN öffnen und Teilnehmer einladen
               </button>
             </div>
           </div>
@@ -190,14 +193,14 @@ export default function SignStepThree({ data, onReset }) {
           </button>
 
           <p className="mt-4 px-2 text-[10px] text-charcoal/20 leading-relaxed animate-fade-up" style={{ animationDelay: '170ms' }}>
-            Die signierte Kopie ist schreibgeschuetzt und kann nicht veraendert werden.
+            Die signierte Kopie ist schreibgeschützt und kann nicht verändert werden.
           </p>
         </aside>
       </div>
 
       <div className="flex items-center gap-6 text-xs pt-6 pb-2 mt-auto animate-fade-up" style={{ animationDelay: '180ms' }}>
         <button onClick={onReset} className="text-charcoal/40 hover:text-charcoal/60 transition-colors">
-          Zurueck zur Uebersicht
+          Zurück zur Übersicht
         </button>
       </div>
     </div>
