@@ -433,28 +433,24 @@ pub async fn bitsign_sign_pdf(
     let upload = upload_pdf_multipart(&session, &pdf_bytes, &file_name, &reason).await?;
     let document_id = upload.document_id;
 
-    // 3. Open DocuSeal signing page in browser (user must sign there)
-    if let Some(slug) = &upload.signing_slug {
-        // Use bit.SIGN's public DocuSeal URL (same domain, /s/ path)
-        let signing_url = format!("{}/s/{}", session.api_url, slug);
-        open::that(&signing_url).ok();
+    // 3. Open DocuSeal signing page in browser (user signs there)
+    if let Some(url) = &upload.embed_url {
+        open::that(url).ok();
     }
 
-    // 4. Poll for signing completion (max 120s)
-    let status = poll_document_status(&db, &machine_key.0, &document_id).await?;
-
-    // 5. Download signed PDF if completed
-    let signed_bytes = if status == "COMPLETED" {
-        download_signed_pdf(&db, &machine_key.0, &document_id).await?
-    } else {
-        return Ok(SignResult {
-            document_id,
-            status,
-            api_url: session.api_url,
-            signed_path: None,
-            certificate: None,
-            timestamp: chrono::Utc::now().to_rfc3339(),
-        });
+    // 4. Poll signed-pdf endpoint (202=pending, 200=ready) — max 120s
+    let signed_bytes = match poll_signed_pdf(&db, &machine_key.0, &document_id).await? {
+        Some(bytes) => bytes,
+        None => {
+            return Ok(SignResult {
+                document_id,
+                status: "PENDING".into(),
+                api_url: session.api_url,
+                signed_path: None,
+                certificate: None,
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            });
+        }
     };
 
     // 5. Temp-save until user chooses location via "Save as" dialog
@@ -507,7 +503,7 @@ pub async fn bitsign_save_signed(
 
 struct UploadResult {
     document_id: String,
-    signing_slug: Option<String>,
+    embed_url: Option<String>,
 }
 
 async fn upload_pdf_multipart(
@@ -546,71 +542,47 @@ async fn upload_pdf_multipart(
         .map(|s| s.to_string())
         .ok_or("Keine Dokument-ID in Antwort")?;
 
-    // Extract signing slug from first submitter (for opening signing URL)
-    let signing_slug = data["submitters"]
+    // Extract embed_url from first submitter (public DocuSeal signing page)
+    let embed_url = data["submitters"]
         .as_array()
         .and_then(|arr| arr.first())
-        .and_then(|s| s["slug"].as_str())
+        .and_then(|s| s["embed_url"].as_str())
         .map(|s| s.to_string());
 
-    Ok(UploadResult { document_id, signing_slug })
+    Ok(UploadResult { document_id, embed_url })
 }
 
-// ── Polling ───────────────────────────────────────────────────────
+// ── Poll signed PDF (202=pending, 200=ready) ─────────────────────
 
-async fn poll_document_status(
+async fn poll_signed_pdf(
     db: &Mutex<Connection>,
     machine_key: &[u8; 32],
     document_id: &str,
-) -> Result<String, String> {
+) -> Result<Option<Vec<u8>>, String> {
     let max_polls = 60; // 60 * 2s = 120s
     for _ in 0..max_polls {
         let (resp, _) = api_request(
             db,
             machine_key,
             "GET",
-            &format!("/api/v1/documents/{}", document_id),
+            &format!("/api/v1/documents/{}/signed-pdf", document_id),
             None,
         ).await?;
 
-        if resp.status().is_success() {
-            let data: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
-            let status = data["status"].as_str().unwrap_or("DRAFT").to_string();
-            match status.as_str() {
-                "COMPLETED" => return Ok(status),
-                "DECLINED" => return Err("Signatur wurde abgelehnt".into()),
-                "EXPIRED" => return Err("Signatur ist abgelaufen".into()),
-                _ => {} // DRAFT, PENDING — keep polling
+        match resp.status().as_u16() {
+            200 => {
+                let bytes = resp.bytes().await
+                    .map(|b| b.to_vec())
+                    .map_err(|e| format!("Download fehlgeschlagen: {e}"))?;
+                return Ok(Some(bytes));
             }
+            202 => {} // Still pending — keep polling
+            _ => {}
         }
 
         tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     }
 
-    // Timeout — return current status so UI can handle it
-    Ok("PENDING".into())
-}
-
-// ── Download signed PDF ───────────────────────────────────────────
-
-async fn download_signed_pdf(
-    db: &Mutex<Connection>,
-    machine_key: &[u8; 32],
-    document_id: &str,
-) -> Result<Vec<u8>, String> {
-    let (resp, _) = api_request(
-        db,
-        machine_key,
-        "GET",
-        &format!("/api/v1/documents/{}/signed-pdf", document_id),
-        None,
-    ).await?;
-
-    if !resp.status().is_success() {
-        return Err("Signierte PDF nicht verfügbar".into());
-    }
-
-    resp.bytes().await
-        .map(|b| b.to_vec())
-        .map_err(|e| format!("Download fehlgeschlagen: {e}"))
+    // Timeout — signing not completed within 120s
+    Ok(None)
 }
