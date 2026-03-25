@@ -31,7 +31,7 @@ image = { version = "0.25", default-features = false, features = ["jpeg", "png"]
 flate2 = "1"
 subsetter = "0.2"
 ttf-parser = "0.25"
-reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+reqwest = { version = "0.12", features = ["json", "multipart", "rustls-tls"], default-features = false }
 tokio = { version = "1", features = ["full"] }
 hex = "0.4"
 

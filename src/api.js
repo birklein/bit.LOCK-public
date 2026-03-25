@@ -24,6 +24,7 @@ export const api = {
   bitsignLogin: (apiUrl) => invoke('bitsign_login', { apiUrl }),
   bitsignLogout: () => invoke('bitsign_logout'),
   bitsignSignPdf: (params) => invoke('bitsign_sign_pdf', params),
+  bitsignSaveSigned: (params) => invoke('bitsign_save_signed', params),
   // Settings
   getSettings: () => invoke('get_settings'),
   updateSettings: (settings) => invoke('update_settings', { settings }),

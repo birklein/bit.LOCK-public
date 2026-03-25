@@ -65,6 +65,7 @@ pub fn run() {
             sign::bitsign_login,
             sign::bitsign_logout,
             sign::bitsign_sign_pdf,
+            sign::bitsign_save_signed,
         ]);
 
     builder

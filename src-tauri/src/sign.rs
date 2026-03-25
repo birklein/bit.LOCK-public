@@ -4,7 +4,7 @@ use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::sync::Mutex;
-use tauri::{Manager, State};
+use tauri::State;
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -35,8 +35,11 @@ pub struct SignSessionInfo {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SignResult {
-    pub signed_path: String,
     pub document_id: String,
+    pub status: String,
+    pub api_url: String,
+    pub signed_path: Option<String>,
+    pub certificate: Option<String>,
     pub timestamp: String,
 }
 
@@ -404,38 +407,122 @@ pub fn bitsign_logout(
     delete_session(&conn)
 }
 
-/// Sign a PDF — computes hash locally, sends only hash to bit.SIGN
+/// Upload PDF to bit.SIGN as multipart, trigger signing, poll for result, save locally
 #[tauri::command]
 pub async fn bitsign_sign_pdf(
-    app: tauri::AppHandle,
     db: State<'_, Mutex<Connection>>,
     machine_key: State<'_, MachineKey>,
     input_path: String,
     reason: String,
 ) -> Result<SignResult, String> {
-    // 1. Read PDF and compute hash locally
+    // 1. Read PDF
     let pdf_bytes = std::fs::read(&input_path)
         .map_err(|e| format!("PDF lesen fehlgeschlagen: {e}"))?;
     let file_name = std::path::Path::new(&input_path)
         .file_name()
         .and_then(|s| s.to_str())
-        .unwrap_or("dokument.pdf");
-    let hash = hex::encode(Sha256::digest(&pdf_bytes));
+        .unwrap_or("dokument.pdf")
+        .to_string();
 
-    // 2. Create signing request (only hash + metadata, NEVER the PDF)
-    let (resp, _session) = api_request(
-        &db,
-        &machine_key.0,
-        "POST",
-        "/api/v1/documents",
-        Some(serde_json::json!({
-            "name": file_name,
-            "source": "bit.LOCK",
-            "hash": hash,
-            "hashAlgorithm": "SHA-256",
-            "reason": reason,
-        })),
-    ).await?;
+    // 2. Upload PDF as multipart to bit.SIGN
+    let session = {
+        let conn = db.lock().map_err(|e| e.to_string())?;
+        load_session(&conn, &machine_key.0).ok_or("Nicht bei bit.SIGN angemeldet")?
+    };
+
+    let document_id = upload_pdf_multipart(&session, &pdf_bytes, &file_name, &reason).await?;
+
+    // 3. Poll for signing completion (max 60s)
+    let status = poll_document_status(&db, &machine_key.0, &document_id).await?;
+
+    // 4. Download signed PDF if completed
+    let signed_bytes = if status == "COMPLETED" {
+        download_signed_pdf(&db, &machine_key.0, &document_id).await?
+    } else {
+        // Not yet completed — return document ID so user can check later
+        return Ok(SignResult {
+            document_id,
+            status,
+            api_url: session.api_url,
+            signed_path: None,
+            certificate: None,
+            timestamp: chrono::Utc::now().to_rfc3339(),
+        });
+    };
+
+    // 5. Temp-save until user chooses location via "Save as" dialog
+    let temp_dir = std::env::temp_dir().join("bit-lock-signed");
+    std::fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
+    let base_name = std::path::Path::new(&file_name)
+        .file_stem().and_then(|s| s.to_str()).unwrap_or("dokument");
+    let temp_path = temp_dir.join(format!("{}_signiert.pdf", base_name));
+    std::fs::write(&temp_path, &signed_bytes).map_err(|e| e.to_string())?;
+
+    Ok(SignResult {
+        document_id,
+        status: "COMPLETED".into(),
+        api_url: session.api_url,
+        signed_path: Some(temp_path.to_string_lossy().to_string()),
+        certificate: None, // TODO: extract from signed PDF or API response
+        timestamp: chrono::Utc::now().to_rfc3339(),
+    })
+}
+
+/// Save signed PDF to user-chosen location
+#[tauri::command]
+pub async fn bitsign_save_signed(
+    temp_path: String,
+    save_path: String,
+) -> Result<String, String> {
+    std::fs::copy(&temp_path, &save_path)
+        .map_err(|e| format!("Speichern fehlgeschlagen: {e}"))?;
+
+    // Set read-only
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&save_path, std::fs::Permissions::from_mode(0o444)).ok();
+    }
+    #[cfg(windows)]
+    {
+        let mut p = std::fs::metadata(&save_path).map_err(|e| e.to_string())?.permissions();
+        p.set_readonly(true);
+        std::fs::set_permissions(&save_path, p).ok();
+    }
+
+    // Clean up temp file
+    std::fs::remove_file(&temp_path).ok();
+
+    Ok(save_path)
+}
+
+// ── Multipart upload ──────────────────────────────────────────────
+
+async fn upload_pdf_multipart(
+    session: &SignSession,
+    pdf_bytes: &[u8],
+    file_name: &str,
+    reason: &str,
+) -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let url = format!("{}/api/v1/documents", session.api_url);
+
+    let form = reqwest::multipart::Form::new()
+        .text("title", file_name.to_string())
+        .text("reason", reason.to_string())
+        .text("source", "bit.LOCK".to_string())
+        .part("file", reqwest::multipart::Part::bytes(pdf_bytes.to_vec())
+            .file_name(file_name.to_string())
+            .mime_str("application/pdf")
+            .map_err(|e| e.to_string())?);
+
+    let resp = client
+        .post(&url)
+        .header("Authorization", format!("Bearer {}", session.access_token))
+        .multipart(form)
+        .send()
+        .await
+        .map_err(|e| format!("Upload fehlgeschlagen: {e}"))?;
 
     if !resp.status().is_success() {
         let body = resp.text().await.unwrap_or_default();
@@ -443,51 +530,66 @@ pub async fn bitsign_sign_pdf(
     }
 
     let data: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
-    let document_id = data["id"].as_str().unwrap_or("unknown").to_string();
+    data["id"].as_str()
+        .map(|s| s.to_string())
+        .ok_or("Keine Dokument-ID in Antwort".into())
+}
 
-    // 3. Try to download signed PDF (if immediately available)
-    let signed_bytes = {
-        let (dl_resp, _) = api_request(
-            &db,
-            &machine_key.0,
+// ── Polling ───────────────────────────────────────────────────────
+
+async fn poll_document_status(
+    db: &Mutex<Connection>,
+    machine_key: &[u8; 32],
+    document_id: &str,
+) -> Result<String, String> {
+    let max_polls = 30; // 30 * 2s = 60s
+    for _ in 0..max_polls {
+        let (resp, _) = api_request(
+            db,
+            machine_key,
             "GET",
-            &format!("/api/v1/documents/{}/signed-pdf", document_id),
+            &format!("/api/v1/documents/{}", document_id),
             None,
         ).await?;
 
-        if dl_resp.status().is_success() {
-            dl_resp.bytes().await.map(|b| b.to_vec()).unwrap_or(pdf_bytes.clone())
-        } else {
-            pdf_bytes.clone()
+        if resp.status().is_success() {
+            let data: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+            let status = data["status"].as_str().unwrap_or("DRAFT").to_string();
+            match status.as_str() {
+                "COMPLETED" => return Ok(status),
+                "DECLINED" => return Err("Signatur wurde abgelehnt".into()),
+                "EXPIRED" => return Err("Signatur ist abgelaufen".into()),
+                _ => {} // DRAFT, PENDING — keep polling
+            }
         }
-    };
 
-    // 4. Save to signed folder (read-only)
-    let signed_dir = app.path().app_data_dir().map_err(|e| e.to_string())?.join("signed");
-    std::fs::create_dir_all(&signed_dir).map_err(|e| e.to_string())?;
-
-    let base_name = std::path::Path::new(file_name)
-        .file_stem().and_then(|s| s.to_str()).unwrap_or("dokument");
-    let ts = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-    let signed_path = signed_dir.join(format!("{}_{}_signiert.pdf", base_name, ts));
-
-    std::fs::write(&signed_path, &signed_bytes).map_err(|e| e.to_string())?;
-
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&signed_path, std::fs::Permissions::from_mode(0o444)).ok();
-    }
-    #[cfg(windows)]
-    {
-        let mut p = std::fs::metadata(&signed_path).map_err(|e| e.to_string())?.permissions();
-        p.set_readonly(true);
-        std::fs::set_permissions(&signed_path, p).ok();
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     }
 
-    Ok(SignResult {
-        signed_path: signed_path.to_string_lossy().to_string(),
-        document_id,
-        timestamp: chrono::Utc::now().to_rfc3339(),
-    })
+    // Timeout — return current status so UI can handle it
+    Ok("PENDING".into())
+}
+
+// ── Download signed PDF ───────────────────────────────────────────
+
+async fn download_signed_pdf(
+    db: &Mutex<Connection>,
+    machine_key: &[u8; 32],
+    document_id: &str,
+) -> Result<Vec<u8>, String> {
+    let (resp, _) = api_request(
+        db,
+        machine_key,
+        "GET",
+        &format!("/api/v1/documents/{}/signed-pdf", document_id),
+        None,
+    ).await?;
+
+    if !resp.status().is_success() {
+        return Err("Signierte PDF nicht verfügbar".into());
+    }
+
+    resp.bytes().await
+        .map(|b| b.to_vec())
+        .map_err(|e| format!("Download fehlgeschlagen: {e}"))
 }
