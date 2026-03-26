@@ -407,15 +407,14 @@ pub fn bitsign_logout(
     delete_session(&conn)
 }
 
-/// Upload PDF to bit.SIGN as multipart, trigger signing, poll for result, save locally
+/// Step 1: Upload PDF to bit.SIGN, returns document_id
 #[tauri::command]
-pub async fn bitsign_sign_pdf(
+pub async fn bitsign_upload_pdf(
     db: State<'_, Mutex<Connection>>,
     machine_key: State<'_, MachineKey>,
     input_path: String,
     reason: String,
-) -> Result<SignResult, String> {
-    // 1. Read PDF
+) -> Result<serde_json::Value, String> {
     let pdf_bytes = std::fs::read(&input_path)
         .map_err(|e| format!("PDF lesen fehlgeschlagen: {e}"))?;
     let file_name = std::path::Path::new(&input_path)
@@ -424,36 +423,94 @@ pub async fn bitsign_sign_pdf(
         .unwrap_or("dokument.pdf")
         .to_string();
 
-    // 2. Upload PDF as multipart to bit.SIGN
     let session = {
         let conn = db.lock().map_err(|e| e.to_string())?;
         load_session(&conn, &machine_key.0).ok_or("Nicht bei bit.SIGN angemeldet")?
     };
 
-    let upload = upload_pdf_multipart(&session, &pdf_bytes, &file_name, &reason).await?;
-    let document_id = upload.document_id;
+    let client = reqwest::Client::new();
+    let form = reqwest::multipart::Form::new()
+        .text("title", file_name.clone())
+        .text("reason", reason)
+        .text("source", "bit.LOCK".to_string())
+        .part("file", reqwest::multipart::Part::bytes(pdf_bytes)
+            .file_name(file_name)
+            .mime_str("application/pdf")
+            .map_err(|e| e.to_string())?);
 
-    // 3. Open DocuSeal signing page in browser (user signs there)
-    if let Some(url) = &upload.embed_url {
-        open::that(url).ok();
+    let resp = client
+        .post(format!("{}/api/v1/documents", session.api_url))
+        .header("Authorization", format!("Bearer {}", session.access_token))
+        .multipart(form)
+        .send()
+        .await
+        .map_err(|e| format!("Upload fehlgeschlagen: {e}"))?;
+
+    if !resp.status().is_success() {
+        let body = resp.text().await.unwrap_or_default();
+        return Err(format!("Upload fehlgeschlagen: {body}"));
     }
 
-    // 4. Poll signed-pdf endpoint (202=pending, 200=ready) — max 120s
-    let signed_bytes = match poll_signed_pdf(&db, &machine_key.0, &document_id).await? {
-        Some(bytes) => bytes,
-        None => {
-            return Ok(SignResult {
-                document_id,
-                status: "PENDING".into(),
-                api_url: session.api_url,
-                signed_path: None,
-                certificate: None,
-                timestamp: chrono::Utc::now().to_rfc3339(),
-            });
-        }
+    resp.json().await.map_err(|e| e.to_string())
+}
+
+/// Step 2: Submit signature PNG to bit.SIGN, get signed PDF back
+#[tauri::command]
+pub async fn bitsign_sign_pdf(
+    db: State<'_, Mutex<Connection>>,
+    machine_key: State<'_, MachineKey>,
+    document_id: String,
+    signature_png: Vec<u8>,
+    reason: String,
+    file_name: String,
+) -> Result<SignResult, String> {
+    let session = {
+        let conn = db.lock().map_err(|e| e.to_string())?;
+        load_session(&conn, &machine_key.0).ok_or("Nicht bei bit.SIGN angemeldet")?
     };
 
-    // 5. Temp-save until user chooses location via "Save as" dialog
+    // 1. Submit signature to bit.SIGN
+    let client = reqwest::Client::new();
+    let form = reqwest::multipart::Form::new()
+        .part("signature", reqwest::multipart::Part::bytes(signature_png)
+            .file_name("signature.png")
+            .mime_str("image/png")
+            .map_err(|e| e.to_string())?)
+        .text("reason", reason);
+
+    let resp = client
+        .post(format!("{}/api/v1/documents/{}/sign", session.api_url, document_id))
+        .header("Authorization", format!("Bearer {}", session.access_token))
+        .multipart(form)
+        .send()
+        .await
+        .map_err(|e| format!("Signierung fehlgeschlagen: {e}"))?;
+
+    if !resp.status().is_success() {
+        let body = resp.text().await.unwrap_or_default();
+        return Err(format!("Signierung fehlgeschlagen: {body}"));
+    }
+
+    let sign_data: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
+
+    // 2. Download signed PDF
+    let (dl_resp, _) = api_request(
+        &db,
+        &machine_key.0,
+        "GET",
+        &format!("/api/v1/documents/{}/signed-pdf", document_id),
+        None,
+    ).await?;
+
+    if !dl_resp.status().is_success() {
+        return Err("Signierte PDF nicht verfügbar".into());
+    }
+
+    let signed_bytes = dl_resp.bytes().await
+        .map(|b| b.to_vec())
+        .map_err(|e| format!("Download fehlgeschlagen: {e}"))?;
+
+    // 3. Temp-save until user chooses location via "Save as" dialog
     let temp_dir = std::env::temp_dir().join("bit-lock-signed");
     std::fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
     let base_name = std::path::Path::new(&file_name)
@@ -466,8 +523,10 @@ pub async fn bitsign_sign_pdf(
         status: "COMPLETED".into(),
         api_url: session.api_url,
         signed_path: Some(temp_path.to_string_lossy().to_string()),
-        certificate: None, // TODO: extract from signed PDF or API response
-        timestamp: chrono::Utc::now().to_rfc3339(),
+        certificate: sign_data["certificate"].as_str().map(|s| s.to_string()),
+        timestamp: sign_data["signedAt"].as_str()
+            .unwrap_or(&chrono::Utc::now().to_rfc3339())
+            .to_string(),
     })
 }
 
@@ -480,7 +539,6 @@ pub async fn bitsign_save_signed(
     std::fs::copy(&temp_path, &save_path)
         .map_err(|e| format!("Speichern fehlgeschlagen: {e}"))?;
 
-    // Set read-only
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
@@ -493,96 +551,6 @@ pub async fn bitsign_save_signed(
         std::fs::set_permissions(&save_path, p).ok();
     }
 
-    // Clean up temp file
     std::fs::remove_file(&temp_path).ok();
-
     Ok(save_path)
-}
-
-// ── Multipart upload ──────────────────────────────────────────────
-
-struct UploadResult {
-    document_id: String,
-    embed_url: Option<String>,
-}
-
-async fn upload_pdf_multipart(
-    session: &SignSession,
-    pdf_bytes: &[u8],
-    file_name: &str,
-    reason: &str,
-) -> Result<UploadResult, String> {
-    let client = reqwest::Client::new();
-    let url = format!("{}/api/v1/documents", session.api_url);
-
-    let form = reqwest::multipart::Form::new()
-        .text("title", file_name.to_string())
-        .text("reason", reason.to_string())
-        .text("source", "bit.LOCK".to_string())
-        .part("file", reqwest::multipart::Part::bytes(pdf_bytes.to_vec())
-            .file_name(file_name.to_string())
-            .mime_str("application/pdf")
-            .map_err(|e| e.to_string())?);
-
-    let resp = client
-        .post(&url)
-        .header("Authorization", format!("Bearer {}", session.access_token))
-        .multipart(form)
-        .send()
-        .await
-        .map_err(|e| format!("Upload fehlgeschlagen: {e}"))?;
-
-    if !resp.status().is_success() {
-        let body = resp.text().await.unwrap_or_default();
-        return Err(format!("Signatur-Anfrage fehlgeschlagen: {body}"));
-    }
-
-    let data: serde_json::Value = resp.json().await.map_err(|e| e.to_string())?;
-    let document_id = data["id"].as_str()
-        .map(|s| s.to_string())
-        .ok_or("Keine Dokument-ID in Antwort")?;
-
-    // Extract embed_url from first submitter (public DocuSeal signing page)
-    let embed_url = data["submitters"]
-        .as_array()
-        .and_then(|arr| arr.first())
-        .and_then(|s| s["embed_url"].as_str())
-        .map(|s| s.to_string());
-
-    Ok(UploadResult { document_id, embed_url })
-}
-
-// ── Poll signed PDF (202=pending, 200=ready) ─────────────────────
-
-async fn poll_signed_pdf(
-    db: &Mutex<Connection>,
-    machine_key: &[u8; 32],
-    document_id: &str,
-) -> Result<Option<Vec<u8>>, String> {
-    let max_polls = 60; // 60 * 2s = 120s
-    for _ in 0..max_polls {
-        let (resp, _) = api_request(
-            db,
-            machine_key,
-            "GET",
-            &format!("/api/v1/documents/{}/signed-pdf", document_id),
-            None,
-        ).await?;
-
-        match resp.status().as_u16() {
-            200 => {
-                let bytes = resp.bytes().await
-                    .map(|b| b.to_vec())
-                    .map_err(|e| format!("Download fehlgeschlagen: {e}"))?;
-                return Ok(Some(bytes));
-            }
-            202 => {} // Still pending — keep polling
-            _ => {}
-        }
-
-        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-    }
-
-    // Timeout — signing not completed within 120s
-    Ok(None)
 }

@@ -23,6 +23,7 @@ export const api = {
   bitsignSetEnabled: (enabled) => invoke('bitsign_set_enabled', { enabled }),
   bitsignLogin: (apiUrl) => invoke('bitsign_login', { apiUrl }),
   bitsignLogout: () => invoke('bitsign_logout'),
+  bitsignUploadPdf: (params) => invoke('bitsign_upload_pdf', params),
   bitsignSignPdf: (params) => invoke('bitsign_sign_pdf', params),
   bitsignSaveSigned: (params) => invoke('bitsign_save_signed', params),
   // Settings

@@ -46,13 +46,23 @@ export default function SignFlow({ onConnected }) {
     setStep(2)
   }, [])
 
-  const handleSign = useCallback(async (reason) => {
+  const handleSign = useCallback(async (reason, signaturePng) => {
     if (!data.inputPath) return
     setData((d) => ({ ...d, reason, error: null }))
     try {
-      const result = await api.bitsignSignPdf({
+      // Step 1: Upload PDF
+      const upload = await api.bitsignUploadPdf({
         inputPath: data.inputPath,
         reason,
+      })
+      const documentId = upload.id
+
+      // Step 2: Submit signature + download signed PDF
+      const result = await api.bitsignSignPdf({
+        documentId,
+        signaturePng,
+        reason,
+        fileName: data.fileName,
       })
       setData((d) => ({ ...d, result }))
       setStep(3)

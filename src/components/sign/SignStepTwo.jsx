@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import SignatureCanvas from './SignatureCanvas'
 import {
   DocumentIcon,
   FingerPrintIcon,
@@ -19,6 +20,7 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
   const [customReason, setCustomReason] = useState('')
   const [signing, setSigning] = useState(false)
   const [elapsed, setElapsed] = useState(0)
+  const [signatureFn, setSignatureFn] = useState(null)
   const timerRef = useRef(null)
 
   useEffect(() => {
@@ -35,11 +37,27 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
     ? customReason
     : REASONS.find((r) => r.id === reason)?.label || ''
 
+  const handleSignatureChange = useCallback((exportFn) => {
+    setSignatureFn(() => exportFn)
+  }, [])
+
   const handleSign = async () => {
+    if (!signatureFn) return
+    const dataUrl = signatureFn()
+    if (!dataUrl) return
+
     setSigning(true)
-    await onSign(effectiveReason)
+    // Convert data URL to byte array
+    const base64 = dataUrl.split(',')[1]
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+
+    await onSign(effectiveReason, Array.from(bytes))
     setSigning(false)
   }
+
+  const canSign = signatureFn && (reason !== 'custom' || customReason.trim())
 
   return (
     <div className="flex flex-col h-full">
@@ -51,7 +69,7 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
           <p className="mt-2 text-charcoal/40 text-[13px]">Schritt 2 von 3</p>
 
           {/* Datei-Info */}
-          <div className="mt-8 bg-surface-low rounded-xl p-3.5 animate-fade-up">
+          <div className="mt-6 bg-surface-low rounded-xl p-3.5 animate-fade-up">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
                 <DocumentIcon className="w-4 h-4 text-amber-600/60" />
@@ -63,17 +81,25 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
             </div>
           </div>
 
+          {/* Unterschrift zeichnen */}
+          <div className="mt-4 animate-fade-up" style={{ animationDelay: '30ms' }}>
+            <label className="block text-[11px] font-semibold text-charcoal/50 mb-2">
+              Ihre Unterschrift
+            </label>
+            <SignatureCanvas onSignature={handleSignatureChange} />
+          </div>
+
           {/* Signatur-Grund */}
-          <div className="mt-4 bg-surface-low rounded-2xl p-5 animate-fade-up" style={{ animationDelay: '50ms' }}>
-            <label className="block text-[11px] font-semibold text-charcoal/50 mb-3">
+          <div className="mt-4 bg-surface-low rounded-2xl p-4 animate-fade-up" style={{ animationDelay: '50ms' }}>
+            <label className="block text-[11px] font-semibold text-charcoal/50 mb-2">
               Grund der Signatur
             </label>
-            <div className="space-y-2">
+            <div className="flex flex-wrap gap-2">
               {REASONS.map((r) => (
                 <button
                   key={r.id}
                   onClick={() => setReason(r.id)}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-xs font-medium transition-all duration-150 ${
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 ${
                     reason === r.id
                       ? 'bg-amber-500/15 text-amber-700 ring-1 ring-amber-500/30'
                       : 'bg-surface text-charcoal/50 hover:bg-surface-mid/50'
@@ -89,26 +115,26 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
                 placeholder="Grund eingeben…"
-                className="mt-3 w-full px-3.5 py-2.5 rounded-xl bg-surface text-xs text-charcoal placeholder-charcoal/25 focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-0"
+                className="mt-2 w-full px-3 py-2 rounded-lg bg-surface text-xs text-charcoal placeholder-charcoal/25 focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-0"
                 autoFocus
               />
             )}
           </div>
 
           {/* Sicherheitshinweis */}
-          <div className="mt-4 flex items-start gap-2.5 bg-amber-50 rounded-xl p-4 animate-fade-up" style={{ animationDelay: '80ms' }}>
+          <div className="mt-3 flex items-start gap-2.5 bg-amber-50 rounded-xl p-3 animate-fade-up" style={{ animationDelay: '80ms' }}>
             <ShieldCheckIcon className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-semibold text-charcoal">Sichere Signatur</p>
-              <p className="text-[11px] text-charcoal/50 mt-1 leading-relaxed">
-                Ihr PDF wird verschlüsselt an bit.SIGN übertragen und dort
-                mit einem rechtsgültigen Zertifikat digital signiert.
+              <p className="text-[11px] font-semibold text-charcoal">PKCS#7-Zertifikat</p>
+              <p className="text-[10px] text-charcoal/50 mt-0.5 leading-relaxed">
+                Ihr PDF wird mit einem rechtsgültigen digitalen Zertifikat signiert,
+                das in Adobe Reader verifizierbar ist.
               </p>
             </div>
           </div>
 
           {data.error && (
-            <div className="mt-4 flex items-start gap-3 bg-red-50 rounded-xl p-4 animate-fade-up">
+            <div className="mt-3 flex items-start gap-3 bg-red-50 rounded-xl p-3 animate-fade-up">
               <ExclamationTriangleIcon className="w-5 h-5 text-danger shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-medium text-danger">Signatur fehlgeschlagen</p>
@@ -120,15 +146,15 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-6 pb-2 mt-auto animate-fade-up" style={{ animationDelay: '100ms' }}>
+      <div className="flex items-center justify-between pt-4 pb-2 mt-auto animate-fade-up" style={{ animationDelay: '100ms' }}>
         <button onClick={onBack} className="text-[13px] font-medium text-charcoal/50 hover:text-charcoal/70 transition-colors">
           Zurück
         </button>
         <button
           onClick={handleSign}
-          disabled={signing || (reason === 'custom' && !customReason.trim())}
+          disabled={signing || !canSign}
           className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200 ${
-            signing
+            signing || !canSign
               ? 'bg-surface-high text-charcoal/40 cursor-not-allowed'
               : 'bg-amber-500 hover:bg-amber-600 text-white shadow-golden hover:shadow-golden-lg hover:-translate-y-0.5 active:translate-y-0'
           }`}

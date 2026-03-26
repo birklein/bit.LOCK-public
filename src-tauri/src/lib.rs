@@ -64,6 +64,7 @@ pub fn run() {
             sign::bitsign_set_enabled,
             sign::bitsign_login,
             sign::bitsign_logout,
+            sign::bitsign_upload_pdf,
             sign::bitsign_sign_pdf,
             sign::bitsign_save_signed,
         ]);
