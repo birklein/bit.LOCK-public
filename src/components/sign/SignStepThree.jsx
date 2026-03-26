@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { save } from '@tauri-apps/plugin-dialog'
-import { openUrl } from '@tauri-apps/plugin-opener'
 import { api } from '../../api'
 import {
   CheckCircleIcon,
@@ -39,12 +38,8 @@ export default function SignStepThree({ data, onReset }) {
 
   const handleOpenInBitSign = async () => {
     if (!result?.documentId || !result?.apiUrl) return
-    try {
-      await openUrl(`${result.apiUrl}/documents/${result.documentId}`)
-    } catch {
-      // Fallback: open crate im Backend nutzen
-      window.open(`${result.apiUrl}/documents/${result.documentId}`, '_blank')
-    }
+    const url = `${result.apiUrl}/documents/${result.documentId}`
+    await api.openUrl(url)
   }
 
   if (isPending) {

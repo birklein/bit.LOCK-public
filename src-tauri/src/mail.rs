@@ -61,6 +61,11 @@ pub fn open_password_mail(
 }
 
 #[tauri::command]
+pub fn open_url(url: String) -> Result<(), String> {
+    open::that(&url).map_err(|e| format!("URL öffnen fehlgeschlagen: {e}"))
+}
+
+#[tauri::command]
 pub fn show_in_folder(file_path: String) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
