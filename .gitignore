@@ -52,3 +52,13 @@ CLAUDE.md
 
 # Internal docs (bleiben lokal)
 features/
+docs/PRD.md
+DESIGN.md
+bit.LOCK.code-workspace
+
+# Old Electron code (replaced by Tauri)
+electron.vite.config.js
+test-electron.js
+src/main/
+src/preload/
+src/renderer/
