@@ -9,6 +9,12 @@ use tauri::State;
 // ── Types ──────────────────────────────────────────────────────────
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ExternalSigner {
+    pub name: String,
+    pub email: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SignaturePosition {
     pub x: f64,
     pub y: f64,
@@ -423,6 +429,7 @@ pub async fn bitsign_upload_pdf(
     machine_key: State<'_, MachineKey>,
     input_path: String,
     reason: String,
+    signers: Option<Vec<ExternalSigner>>,
 ) -> Result<serde_json::Value, String> {
     let pdf_bytes = std::fs::read(&input_path)
         .map_err(|e| format!("PDF lesen fehlgeschlagen: {e}"))?;
@@ -438,7 +445,7 @@ pub async fn bitsign_upload_pdf(
     };
 
     let client = reqwest::Client::new();
-    let form = reqwest::multipart::Form::new()
+    let mut form = reqwest::multipart::Form::new()
         .text("title", file_name.clone())
         .text("reason", reason)
         .text("source", "bit.LOCK".to_string())
@@ -446,6 +453,13 @@ pub async fn bitsign_upload_pdf(
             .file_name(file_name)
             .mime_str("application/pdf")
             .map_err(|e| e.to_string())?);
+
+    if let Some(ref s) = signers {
+        if !s.is_empty() {
+            let signers_json = serde_json::to_string(s).map_err(|e| e.to_string())?;
+            form = form.text("signers", signers_json);
+        }
+    }
 
     let resp = client
         .post(format!("{}/api/v1/documents", session.api_url))
@@ -573,6 +587,42 @@ pub async fn bitsign_save_signed(
 
     std::fs::remove_file(&temp_path).ok();
     Ok(save_path)
+}
+
+/// Send signing invitations to external signers
+#[tauri::command]
+pub async fn bitsign_send_invites(
+    db: State<'_, Mutex<Connection>>,
+    machine_key: State<'_, MachineKey>,
+    document_id: String,
+    message: Option<String>,
+) -> Result<serde_json::Value, String> {
+    let session = {
+        let conn = db.lock().map_err(|e| e.to_string())?;
+        load_session(&conn, &machine_key.0).ok_or("Nicht bei bit.SIGN angemeldet")?
+    };
+
+    let client = reqwest::Client::new();
+    let mut body = serde_json::Map::new();
+    if let Some(msg) = message {
+        body.insert("message".into(), serde_json::Value::String(msg));
+    }
+
+    let resp = client
+        .post(format!("{}/api/v1/documents/{}/send", session.api_url, document_id))
+        .header("Authorization", format!("Bearer {}", session.access_token))
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| format!("Einladungen versenden fehlgeschlagen: {e}"))?;
+
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body = resp.text().await.unwrap_or_default();
+        return Err(format!("Einladungen versenden fehlgeschlagen ({status}): {body}"));
+    }
+
+    resp.json().await.map_err(|e| e.to_string())
 }
 
 /// Read a local PDF file and return it as base64 for rendering in the frontend

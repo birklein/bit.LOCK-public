@@ -8,6 +8,8 @@ import {
   ArrowPathIcon,
   ExclamationTriangleIcon,
   ShieldCheckIcon,
+  UserPlusIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline'
 
 const REASONS = [
@@ -30,6 +32,13 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
   const [captionPlace, setCaptionPlace] = useState('')
   const [captionName, setCaptionName] = useState(session?.name || '')
   const timerRef = useRef(null)
+
+  // External signers
+  const [signers, setSigners] = useState([])
+  const [showSigners, setShowSigners] = useState(false)
+  const [newSignerName, setNewSignerName] = useState('')
+  const [newSignerEmail, setNewSignerEmail] = useState('')
+  const [inviteMessage, setInviteMessage] = useState('')
 
   // PDF preview state
   const [pdfBase64, setPdfBase64] = useState(null)
@@ -81,6 +90,17 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
     setSignatureDataUrl(dataUrl)
   }, [])
 
+  const handleAddSigner = () => {
+    if (!newSignerName.trim() || !newSignerEmail.trim()) return
+    setSigners((s) => [...s, { name: newSignerName.trim(), email: newSignerEmail.trim() }])
+    setNewSignerName('')
+    setNewSignerEmail('')
+  }
+
+  const handleRemoveSigner = (index) => {
+    setSigners((s) => s.filter((_, i) => i !== index))
+  }
+
   const handleSign = async () => {
     if (!signatureDataUrl) return
 
@@ -103,7 +123,7 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
       }
     }
 
-    await onSign(effectiveReason, Array.from(bytes), position, showCaption)
+    await onSign(effectiveReason, Array.from(bytes), position, showCaption, signers, inviteMessage || undefined)
     setSigning(false)
   }
 
@@ -224,6 +244,67 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
                 className="mt-2 w-full px-3 py-1.5 rounded-lg bg-surface text-xs text-charcoal placeholder-charcoal/25 focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-0"
                 autoFocus
               />
+            )}
+          </div>
+
+          {/* Externe Unterzeichner */}
+          <div className="mt-3 animate-fade-up" style={{ animationDelay: '60ms' }}>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showSigners}
+                onChange={(e) => setShowSigners(e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-charcoal/20 text-amber-500 focus:ring-amber-500/30"
+              />
+              <UserPlusIcon className="w-3.5 h-3.5 text-charcoal/40" />
+              <span className="text-[11px] text-charcoal/50">Weitere Unterzeichner einladen</span>
+            </label>
+            {showSigners && (
+              <div className="mt-2 bg-surface-low rounded-xl p-3 space-y-2">
+                {signers.map((s, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-surface rounded-lg px-2.5 py-1.5">
+                    <span className="text-[11px] text-charcoal font-medium truncate">{s.name}</span>
+                    <span className="text-[10px] text-charcoal/40 truncate">{s.email}</span>
+                    <button
+                      onClick={() => handleRemoveSigner(i)}
+                      className="ml-auto shrink-0 text-charcoal/30 hover:text-danger transition-colors"
+                    >
+                      <XMarkIcon className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newSignerName}
+                    onChange={(e) => setNewSignerName(e.target.value)}
+                    placeholder="Name"
+                    className="flex-1 px-2.5 py-1.5 rounded-lg bg-surface text-[11px] text-charcoal placeholder-charcoal/25 focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-0"
+                  />
+                  <input
+                    type="email"
+                    value={newSignerEmail}
+                    onChange={(e) => setNewSignerEmail(e.target.value)}
+                    placeholder="E-Mail"
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddSigner()}
+                    className="flex-1 px-2.5 py-1.5 rounded-lg bg-surface text-[11px] text-charcoal placeholder-charcoal/25 focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-0"
+                  />
+                  <button
+                    onClick={handleAddSigner}
+                    disabled={!newSignerName.trim() || !newSignerEmail.trim()}
+                    className="px-2.5 py-1.5 rounded-lg bg-amber-500/15 text-amber-700 text-[10px] font-medium hover:bg-amber-500/25 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Hinzufügen
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={inviteMessage}
+                  onChange={(e) => setInviteMessage(e.target.value)}
+                  placeholder="Nachricht an Unterzeichner (optional)"
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-surface text-[11px] text-charcoal placeholder-charcoal/25 focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-0"
+                />
+              </div>
             )}
           </div>
 

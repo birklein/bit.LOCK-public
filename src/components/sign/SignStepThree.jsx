@@ -43,18 +43,31 @@ export default function SignStepThree({ data, onReset }) {
   }
 
   if (isPending) {
+    const signers = result?.signers || []
     return (
       <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto text-center">
         <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center mb-6">
           <ClockIcon className="w-8 h-8 text-amber-600 animate-pulse" />
         </div>
         <h1 className="text-2xl font-bold text-charcoal tracking-tight">
-          Signierung läuft
+          Einladungen versendet
         </h1>
         <p className="mt-3 text-charcoal/40 text-[13px] leading-relaxed">
-          Das Dokument wird von bit.SIGN verarbeitet. Sie können den Status
-          in bit.SIGN verfolgen oder später zurückkehren.
+          {signers.length > 0
+            ? `${signers.length} Unterzeichner wurden per E-Mail eingeladen. Sie können den Status in bit.SIGN verfolgen.`
+            : 'Das Dokument wird von bit.SIGN verarbeitet. Sie können den Status in bit.SIGN verfolgen oder später zurückkehren.'}
         </p>
+        {signers.length > 0 && (
+          <div className="mt-4 w-full space-y-1.5">
+            {signers.map((s, i) => (
+              <div key={i} className="flex items-center gap-2 bg-surface-low rounded-lg px-3 py-2 text-left">
+                <EnvelopeIcon className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span className="text-[11px] text-charcoal font-medium truncate">{s.name}</span>
+                <span className="text-[10px] text-charcoal/40 truncate ml-auto">{s.email}</span>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="mt-8 space-y-3 w-full">
           <button
             onClick={handleOpenInBitSign}
@@ -147,8 +160,8 @@ export default function SignStepThree({ data, onReset }) {
             Hinweis: Unter macOS und Outlook muss der Anhang manuell zur E-Mail hinzugefügt werden.
           </p>
 
-          {/* Weitere Signaturen anfordern */}
-          <div className="mt-6 animate-fade-up" style={{ animationDelay: '150ms' }}>
+          {/* Weitere Signaturen anfordern (only if no signers were already invited) */}
+          {!result?.signers?.length && <div className="mt-6 animate-fade-up" style={{ animationDelay: '150ms' }}>
             <div className="bg-surface-low rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
                 <UsersIcon className="w-4 h-4 text-charcoal/30" />
@@ -168,7 +181,7 @@ export default function SignStepThree({ data, onReset }) {
                 In bit.SIGN öffnen und Teilnehmer einladen
               </button>
             </div>
-          </div>
+          </div>}
         </div>
 
         {/* Sidebar */}

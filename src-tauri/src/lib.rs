@@ -68,6 +68,7 @@ pub fn run() {
             sign::bitsign_upload_pdf,
             sign::bitsign_sign_pdf,
             sign::bitsign_save_signed,
+            sign::bitsign_send_invites,
             sign::read_pdf_base64,
         ]);
 

@@ -46,14 +46,15 @@ export default function SignFlow({ onConnected }) {
     setStep(2)
   }, [])
 
-  const handleSign = useCallback(async (reason, signaturePng, position, captionInPng) => {
+  const handleSign = useCallback(async (reason, signaturePng, position, captionInPng, signers, inviteMessage) => {
     if (!data.inputPath) return
     setData((d) => ({ ...d, reason, error: null }))
     try {
-      // Step 1: Upload PDF
+      // Step 1: Upload PDF (with optional external signers)
       const upload = await api.bitsignUploadPdf({
         inputPath: data.inputPath,
         reason,
+        signers: signers?.length ? signers : undefined,
       })
       const documentId = upload.id
 
@@ -66,6 +67,17 @@ export default function SignFlow({ onConnected }) {
         position,
         captionInPng: captionInPng || false,
       })
+
+      // Step 3: Send invitations to external signers
+      if (signers?.length) {
+        await api.bitsignSendInvites({
+          documentId,
+          message: inviteMessage,
+        })
+        result.status = 'PENDING'
+        result.signers = signers
+      }
+
       setData((d) => ({ ...d, result }))
       setStep(3)
     } catch (err) {

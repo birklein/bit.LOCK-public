@@ -28,6 +28,7 @@ export const api = {
   bitsignUploadPdf: (params) => invoke('bitsign_upload_pdf', params),
   bitsignSignPdf: (params) => invoke('bitsign_sign_pdf', params),
   bitsignSaveSigned: (params) => invoke('bitsign_save_signed', params),
+  bitsignSendInvites: (params) => invoke('bitsign_send_invites', params),
   // Settings
   getSettings: () => invoke('get_settings'),
   updateSettings: (settings) => invoke('update_settings', { settings }),
