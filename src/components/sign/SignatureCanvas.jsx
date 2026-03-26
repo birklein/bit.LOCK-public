@@ -3,13 +3,14 @@ import { TrashIcon, PencilIcon, LanguageIcon } from '@heroicons/react/24/outline
 
 const FONT_URL = 'https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap'
 
-export default function SignatureCanvas({ onSignature, width = 500, height = 180 }) {
+export default function SignatureCanvas({ onChange, width = 500, height = 180 }) {
   const canvasRef = useRef(null)
   const [drawing, setDrawing] = useState(false)
   const [hasContent, setHasContent] = useState(false)
   const [mode, setMode] = useState('draw') // 'draw' | 'type'
   const [typedName, setTypedName] = useState('')
   const [fontLoaded, setFontLoaded] = useState(false)
+  const strokeCountRef = useRef(0)
 
   // Load Caveat font
   useEffect(() => {
@@ -38,13 +39,19 @@ export default function SignatureCanvas({ onSignature, width = 500, height = 180
 
   useEffect(() => { clearCanvas() }, [clearCanvas])
 
+  const emitDataUrl = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    onChange?.(canvas.toDataURL('image/png'))
+  }, [onChange])
+
   // Render typed name on canvas
   useEffect(() => {
     if (mode !== 'type' || !fontLoaded) return
     clearCanvas()
     if (!typedName.trim()) {
       setHasContent(false)
-      onSignature?.(null)
+      onChange?.(null)
       return
     }
     const canvas = canvasRef.current
@@ -55,7 +62,8 @@ export default function SignatureCanvas({ onSignature, width = 500, height = 180
     ctx.textBaseline = 'middle'
     ctx.fillText(typedName, width / 2, height / 2)
     setHasContent(true)
-  }, [typedName, mode, fontLoaded, width, height, clearCanvas, onSignature])
+    emitDataUrl()
+  }, [typedName, mode, fontLoaded, width, height, clearCanvas, onChange, emitDataUrl])
 
   const getPos = useCallback((e) => {
     const canvas = canvasRef.current
@@ -91,34 +99,29 @@ export default function SignatureCanvas({ onSignature, width = 500, height = 180
     const pos = getPos(e)
     ctx.lineTo(pos.x, pos.y)
     ctx.stroke()
-    setHasContent(true)
-  }, [drawing, getPos, mode])
+    if (!hasContent) setHasContent(true)
+  }, [drawing, getPos, mode, hasContent])
 
   const stopDraw = useCallback(() => {
-    setDrawing(false)
-  }, [])
+    if (drawing) {
+      setDrawing(false)
+      strokeCountRef.current += 1
+      emitDataUrl()
+    }
+  }, [drawing, emitDataUrl])
 
   const clear = useCallback(() => {
     clearCanvas()
     setHasContent(false)
     setTypedName('')
-    onSignature?.(null)
-  }, [clearCanvas, onSignature])
+    strokeCountRef.current = 0
+    onChange?.(null)
+  }, [clearCanvas, onChange])
 
   const switchMode = useCallback((newMode) => {
     clear()
     setMode(newMode)
   }, [clear])
-
-  const exportPng = useCallback(() => {
-    if (!hasContent) return null
-    return canvasRef.current.toDataURL('image/png')
-  }, [hasContent])
-
-  // Expose export to parent
-  useEffect(() => {
-    onSignature?.(hasContent ? exportPng : null)
-  }, [hasContent, exportPng, onSignature])
 
   return (
     <div className="space-y-2">

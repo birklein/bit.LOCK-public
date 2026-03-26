@@ -17,15 +17,14 @@ const REASONS = [
   { id: 'custom', label: 'Eigener Text…' },
 ]
 
-const DEFAULT_SIG_WIDTH_PT = 200
-const DEFAULT_SIG_HEIGHT_PT = 80
+const DEFAULT_SIG_WIDTH_PT = 280
+const DEFAULT_SIG_HEIGHT_PT = 100
 
 export default function SignStepTwo({ data, session, onSign, onBack }) {
   const [reason, setReason] = useState('approved')
   const [customReason, setCustomReason] = useState('')
   const [signing, setSigning] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const [signatureFn, setSignatureFn] = useState(null)
   const [signatureDataUrl, setSignatureDataUrl] = useState(null)
   const timerRef = useRef(null)
 
@@ -75,24 +74,15 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
     ? customReason
     : REASONS.find((r) => r.id === reason)?.label || ''
 
-  const handleSignatureChange = useCallback((exportFn) => {
-    setSignatureFn(() => exportFn)
-    // Get current data URL for overlay preview
-    if (exportFn) {
-      const url = exportFn()
-      setSignatureDataUrl(url)
-    } else {
-      setSignatureDataUrl(null)
-    }
+  const handleSignatureChange = useCallback((dataUrl) => {
+    setSignatureDataUrl(dataUrl)
   }, [])
 
   const handleSign = async () => {
-    if (!signatureFn) return
-    const dataUrl = signatureFn()
-    if (!dataUrl) return
+    if (!signatureDataUrl) return
 
     setSigning(true)
-    const base64 = dataUrl.split(',')[1]
+    const base64 = signatureDataUrl.split(',')[1]
     const binary = atob(base64)
     const bytes = new Uint8Array(binary.length)
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
@@ -114,7 +104,7 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
     setSigning(false)
   }
 
-  const canSign = signatureFn && (reason !== 'custom' || customReason.trim())
+  const canSign = signatureDataUrl && (reason !== 'custom' || customReason.trim())
 
   return (
     <div className="flex flex-col h-full">
@@ -164,7 +154,7 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
             <label className="block text-[11px] font-semibold text-charcoal/50 mb-2">
               Ihre Unterschrift
             </label>
-            <SignatureCanvas onSignature={handleSignatureChange} width={380} height={140} />
+            <SignatureCanvas onChange={handleSignatureChange} width={380} height={140} />
           </div>
 
           {/* Signatur-Grund */}
