@@ -95,7 +95,7 @@ export default function SignStepOne({ onFileSelected, session, onLogout }) {
             <div className="flex items-center gap-2 mb-4">
               <FingerPrintIcon className="w-4 h-4 text-amber-600" />
               <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-amber-700">
-                bit.SIGN
+                Signatur
               </span>
             </div>
 

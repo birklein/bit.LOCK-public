@@ -66,7 +66,7 @@ export default function SettingsView() {
   return (
     <div className="h-full overflow-auto px-16 pt-10 pb-8 max-w-3xl">
       <h1 className="text-2xl font-bold text-charcoal tracking-tight">Einstellungen</h1>
-      <p className="mt-2 text-charcoal/40 text-[13px]">Konfigurieren Sie bit.LOCK nach Ihren Wünschen.</p>
+      <p className="mt-2 text-charcoal/40 text-[13px]">Passen Sie die Einstellungen nach Ihren Wünschen an.</p>
 
       {/* E-Mail */}
       <Section icon={EnvelopeIcon} title="E-Mail-Vorlagen" className="mt-10">
@@ -170,14 +170,14 @@ export default function SettingsView() {
         </Field>
       </Section>
 
-      {/* bit.SIGN Integration */}
-      <Section icon={FingerPrintIcon} title="bit.SIGN Integration" className="mt-6">
-        <Field label="bit.SIGN Tenant-Adresse" hint="Format: ihrefirma.bitsign.cloud">
+      {/* Signatur-Server */}
+      <Section icon={FingerPrintIcon} title="Signatur-Server" className="mt-6">
+        <Field label="Server-Adresse" hint="Format: https://sign.example.com">
           <input
             type="url"
             value={signTenantUrl}
             onChange={(e) => setSignTenantUrl(e.target.value)}
-            placeholder="ihrefirma.bitsign.cloud"
+            placeholder="https://sign.example.com"
             className="w-full px-3.5 py-2.5 rounded-xl bg-surface text-xs text-charcoal placeholder-charcoal/25 focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-0"
           />
         </Field>

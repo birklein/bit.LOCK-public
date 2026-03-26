@@ -54,8 +54,8 @@ export default function SignStepThree({ data, onReset }) {
         </h1>
         <p className="mt-3 text-charcoal/40 text-[13px] leading-relaxed">
           {signers.length > 0
-            ? `${signers.length} Unterzeichner wurden per E-Mail eingeladen. Sie können den Status in bit.SIGN verfolgen.`
-            : 'Das Dokument wird von bit.SIGN verarbeitet. Sie können den Status in bit.SIGN verfolgen oder später zurückkehren.'}
+            ? `${signers.length} Unterzeichner wurden per E-Mail eingeladen. Sie können den Status in Signatur-Server verfolgen.`
+            : 'Das Dokument wird von Signatur-Server verarbeitet. Sie können den Status in Signatur-Server verfolgen oder später zurückkehren.'}
         </p>
         {signers.length > 0 && (
           <div className="mt-4 w-full space-y-1.5">
@@ -74,7 +74,7 @@ export default function SignStepThree({ data, onReset }) {
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold shadow-golden transition-all duration-200"
           >
             <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-            In bit.SIGN öffnen
+            In Signatur-Server öffnen
           </button>
           <button
             onClick={onReset}
@@ -112,7 +112,7 @@ export default function SignStepThree({ data, onReset }) {
               </span>
             </div>
             <div className="space-y-2">
-              <DetailRow label="Zertifikat" value={result?.certificate || 'birklein IT GmbH'} />
+              <DetailRow label="Zertifikat" value={result?.certificate || '—'} />
               <DetailRow label="Dokument-ID" value={result?.documentId || '\u2014'} />
               <DetailRow
                 label="Zeitstempel"
@@ -170,7 +170,7 @@ export default function SignStepThree({ data, onReset }) {
                 </span>
               </div>
               <p className="text-xs text-charcoal/40 leading-relaxed mb-3">
-                Fordern Sie über bit.SIGN weitere Signaturteilnehmer an —
+                Fordern Sie über Signatur-Server weitere Signaturteilnehmer an —
                 z.B. Geschäftsführer, Vertragspartner oder Genehmiger.
               </p>
               <button
@@ -178,7 +178,7 @@ export default function SignStepThree({ data, onReset }) {
                 className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface hover:bg-surface-mid/50 transition-colors text-xs font-medium text-charcoal/50 hover:text-charcoal/70"
               >
                 <UsersIcon className="w-3.5 h-3.5" />
-                In bit.SIGN öffnen und Teilnehmer einladen
+                In Signatur-Server öffnen und Teilnehmer einladen
               </button>
             </div>
           </div>}

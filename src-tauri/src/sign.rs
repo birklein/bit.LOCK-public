@@ -129,14 +129,14 @@ async fn oauth2_pkce_flow(api_url: &str) -> Result<(String, String), String> {
 
     let (verifier, challenge) = generate_pkce();
 
-    // Fixed port required for OAuth2 redirect_uri matching in bit.SIGN
+    // Fixed port required for OAuth2 redirect_uri matching
     const CALLBACK_PORT: u16 = 13579;
     let listener = tokio::net::TcpListener::bind(("127.0.0.1", CALLBACK_PORT))
         .await
         .map_err(|_| "Anmeldung läuft bereits — bitte warten oder bit.LOCK neu starten".to_string())?;
     let redirect_uri = format!("http://localhost:{}/callback", CALLBACK_PORT);
 
-    // bit.SIGN OAuth2 authorize endpoint
+    // OAuth2 authorize endpoint
     let auth_url = format!(
         "{}/api/auth/oauth2/authorize?client_id=bit-lock&redirect_uri={}&response_type=code&code_challenge={}&code_challenge_method=S256&scope=openid%20profile%20email%20offline_access%20documents:read%20documents:write%20documents:sign",
         api_url,
@@ -276,7 +276,7 @@ async fn api_request(
 ) -> Result<(reqwest::Response, SignSession), String> {
     let session = {
         let conn = db.lock().map_err(|e| e.to_string())?;
-        load_session(&conn, machine_key).ok_or("Nicht bei bit.SIGN angemeldet")?
+        load_session(&conn, machine_key).ok_or("Nicht beim Signatur-Server angemeldet")?
     };
 
     let client = reqwest::Client::new();
@@ -422,7 +422,7 @@ pub fn bitsign_logout(
     delete_session(&conn)
 }
 
-/// Step 1: Upload PDF to bit.SIGN, returns document_id
+/// Step 1: Upload PDF to signing server, returns document_id
 #[tauri::command]
 pub async fn bitsign_upload_pdf(
     db: State<'_, Mutex<Connection>>,
@@ -441,14 +441,14 @@ pub async fn bitsign_upload_pdf(
 
     let session = {
         let conn = db.lock().map_err(|e| e.to_string())?;
-        load_session(&conn, &machine_key.0).ok_or("Nicht bei bit.SIGN angemeldet")?
+        load_session(&conn, &machine_key.0).ok_or("Nicht beim Signatur-Server angemeldet")?
     };
 
     let client = reqwest::Client::new();
     let mut form = reqwest::multipart::Form::new()
         .text("title", file_name.clone())
         .text("reason", reason)
-        .text("source", "bit.LOCK".to_string())
+        .text("source", "desktop".to_string())
         .part("file", reqwest::multipart::Part::bytes(pdf_bytes)
             .file_name(file_name)
             .mime_str("application/pdf")
@@ -477,7 +477,7 @@ pub async fn bitsign_upload_pdf(
     resp.json().await.map_err(|e| e.to_string())
 }
 
-/// Step 2: Submit signature PNG to bit.SIGN, get signed PDF back
+/// Step 2: Submit signature PNG to signing server, get signed PDF back
 #[tauri::command]
 pub async fn bitsign_sign_pdf(
     db: State<'_, Mutex<Connection>>,
@@ -491,10 +491,10 @@ pub async fn bitsign_sign_pdf(
 ) -> Result<SignResult, String> {
     let session = {
         let conn = db.lock().map_err(|e| e.to_string())?;
-        load_session(&conn, &machine_key.0).ok_or("Nicht bei bit.SIGN angemeldet")?
+        load_session(&conn, &machine_key.0).ok_or("Nicht beim Signatur-Server angemeldet")?
     };
 
-    // 1. Submit signature to bit.SIGN
+    // 1. Submit signature to signing server
     let client = reqwest::Client::new();
     let mut form = reqwest::multipart::Form::new()
         .part("signature", reqwest::multipart::Part::bytes(signature_png)
@@ -599,7 +599,7 @@ pub async fn bitsign_send_invites(
 ) -> Result<serde_json::Value, String> {
     let session = {
         let conn = db.lock().map_err(|e| e.to_string())?;
-        load_session(&conn, &machine_key.0).ok_or("Nicht bei bit.SIGN angemeldet")?
+        load_session(&conn, &machine_key.0).ok_or("Nicht beim Signatur-Server angemeldet")?
     };
 
     let client = reqwest::Client::new();

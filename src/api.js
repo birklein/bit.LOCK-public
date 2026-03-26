@@ -19,7 +19,7 @@ export const api = {
   mergePdfs: (params) => invoke('merge_pdfs', params),
   selectMergeSavePath: (suggestedName) => invoke('select_merge_save_path', { suggestedName }),
   printPdf: (filePath) => invoke('print_pdf', { filePath }),
-  // bit.SIGN
+  // Signing
   bitsignStatus: () => invoke('bitsign_status'),
   bitsignSetEnabled: (enabled) => invoke('bitsign_set_enabled', { enabled }),
   bitsignLogin: (apiUrl) => invoke('bitsign_login', { apiUrl }),

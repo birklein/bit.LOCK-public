@@ -49,3 +49,6 @@ Thumbs.db
 # AI agent config (bleibt lokal)
 .claude/
 CLAUDE.md
+
+# Internal docs (bleiben lokal)
+features/

@@ -59,7 +59,7 @@ export default function Sidebar({ activeView, onNavigate, signEnabled }) {
         })}
       </nav>
 
-      {/* bit.SIGN CTA — only when not connected */}
+      {/* Signing CTA — only when not connected */}
       {!signEnabled && (
         <div className="px-4 pb-3">
           <button
@@ -67,7 +67,7 @@ export default function Sidebar({ activeView, onNavigate, signEnabled }) {
             className="no-drag w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[11px] text-charcoal/30 hover:text-amber-600 hover:bg-amber-500/5 transition-all duration-150"
           >
             <FingerPrintIcon className="w-[15px] h-[15px]" />
-            Mit bit.SIGN verbinden
+            Signatur-Server verbinden
           </button>
         </div>
       )}

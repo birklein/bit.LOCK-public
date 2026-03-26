@@ -22,8 +22,8 @@ pub struct AppSettings {
     // Updates
     pub auto_check_updates: bool,
 
-    // bit.SIGN
-    pub bitsign_tenant_url: String, // z.B. "ihrefirma.bitsign.cloud"
+    // Signing server
+    pub bitsign_tenant_url: String, // signing server URL
 }
 
 impl Default for AppSettings {

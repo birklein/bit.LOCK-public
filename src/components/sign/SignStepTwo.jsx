@@ -313,7 +313,7 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
             <ShieldCheckIcon className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-[10px] text-charcoal/50 leading-relaxed">
               <span className="font-semibold text-charcoal">PKCS#7-Zertifikat</span> — Ihr PDF wird mit einem
-              rechtsgültigen digitalen Zertifikat signiert (birklein IT GmbH).
+              rechtsgültigen digitalen Zertifikat signiert.
             </p>
           </div>
 
