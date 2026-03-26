@@ -3,7 +3,10 @@ import { TrashIcon, PencilIcon, LanguageIcon } from '@heroicons/react/24/outline
 
 const FONT_URL = 'https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap'
 
-export default function SignatureCanvas({ onChange, width = 500, height = 180 }) {
+const CAPTION_HEIGHT = 30
+
+export default function SignatureCanvas({ onChange, caption, width = 500, height = 180 }) {
+  const totalHeight = caption ? height + CAPTION_HEIGHT : height
   const canvasRef = useRef(null)
   const [drawing, setDrawing] = useState(false)
   const [hasContent, setHasContent] = useState(false)
@@ -28,21 +31,46 @@ export default function SignatureCanvas({ onChange, width = 500, height = 180 })
   const clearCanvas = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+    canvas.width = width
+    canvas.height = totalHeight
     const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, width, height)
+    ctx.clearRect(0, 0, width, totalHeight)
     ctx.strokeStyle = '#1a1a1a'
     ctx.lineWidth = 2.5
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
-  }, [width, height])
+  }, [width, totalHeight])
 
   useEffect(() => { clearCanvas() }, [clearCanvas])
+
+  const drawCaption = useCallback(() => {
+    if (!caption) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    // Draw thin separator line
+    ctx.save()
+    ctx.strokeStyle = '#999999'
+    ctx.lineWidth = 0.5
+    ctx.beginPath()
+    ctx.moveTo(width * 0.1, height + 4)
+    ctx.lineTo(width * 0.9, height + 4)
+    ctx.stroke()
+    // Draw caption text
+    ctx.fillStyle = '#555555'
+    ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'top'
+    ctx.fillText(caption, width / 2, height + 10)
+    ctx.restore()
+  }, [caption, width, height])
 
   const emitDataUrl = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+    drawCaption()
     onChange?.(canvas.toDataURL('image/png'))
-  }, [onChange])
+  }, [onChange, drawCaption])
 
   // Render typed name on canvas
   useEffect(() => {
@@ -61,8 +89,16 @@ export default function SignatureCanvas({ onChange, width = 500, height = 180 })
     ctx.textBaseline = 'middle'
     ctx.fillText(typedName, width / 2, height / 2)
     setHasContent(true)
+    drawCaption()
     emitDataUrl()
-  }, [typedName, mode, fontLoaded, width, height, clearCanvas, onChange, emitDataUrl])
+  }, [typedName, mode, fontLoaded, width, height, clearCanvas, onChange, emitDataUrl, drawCaption])
+
+  // Re-render caption when it changes
+  useEffect(() => {
+    if (!hasContent || !caption) return
+    drawCaption()
+    onChange?.(canvasRef.current?.toDataURL('image/png') ?? null)
+  }, [caption, hasContent, drawCaption, onChange])
 
   const getPos = useCallback((e) => {
     const canvas = canvasRef.current
@@ -167,9 +203,9 @@ export default function SignatureCanvas({ onChange, width = 500, height = 180 })
         <canvas
           ref={canvasRef}
           width={width}
-          height={height}
+          height={totalHeight}
           className={`w-full touch-none ${mode === 'draw' ? 'cursor-crosshair' : 'cursor-default'}`}
-          style={{ height: `${height * 0.6}px` }}
+          style={{ height: `${totalHeight * 0.6}px` }}
           onMouseDown={startDraw}
           onMouseMove={draw}
           onMouseUp={stopDraw}

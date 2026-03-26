@@ -26,6 +26,9 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
   const [signing, setSigning] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [signatureDataUrl, setSignatureDataUrl] = useState(null)
+  const [showCaption, setShowCaption] = useState(false)
+  const [captionPlace, setCaptionPlace] = useState('')
+  const [captionName, setCaptionName] = useState(session?.name || '')
   const timerRef = useRef(null)
 
   // PDF preview state
@@ -104,6 +107,10 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
     setSigning(false)
   }
 
+  const caption = showCaption
+    ? [captionPlace, new Date().toLocaleDateString('de-DE'), captionName].filter(Boolean).join(', ')
+    : null
+
   const canSign = signatureDataUrl && (reason !== 'custom' || customReason.trim())
 
   return (
@@ -154,7 +161,38 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
             <label className="block text-[11px] font-semibold text-charcoal/50 mb-2">
               Ihre Unterschrift
             </label>
-            <SignatureCanvas onChange={handleSignatureChange} width={380} height={140} />
+            <SignatureCanvas onChange={handleSignatureChange} caption={caption} width={380} height={140} />
+          </div>
+
+          {/* Ort, Datum, Name */}
+          <div className="mt-2 animate-fade-up" style={{ animationDelay: '40ms' }}>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showCaption}
+                onChange={(e) => setShowCaption(e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-charcoal/20 text-amber-500 focus:ring-amber-500/30"
+              />
+              <span className="text-[11px] text-charcoal/50">Ort, Datum und Name unter Unterschrift</span>
+            </label>
+            {showCaption && (
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  value={captionPlace}
+                  onChange={(e) => setCaptionPlace(e.target.value)}
+                  placeholder="Ort"
+                  className="flex-1 px-2.5 py-1.5 rounded-lg bg-surface-low text-[11px] text-charcoal placeholder-charcoal/25 focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-0"
+                />
+                <input
+                  type="text"
+                  value={captionName}
+                  onChange={(e) => setCaptionName(e.target.value)}
+                  placeholder="Name"
+                  className="flex-1 px-2.5 py-1.5 rounded-lg bg-surface-low text-[11px] text-charcoal placeholder-charcoal/25 focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-0"
+                />
+              </div>
+            )}
           </div>
 
           {/* Signatur-Grund */}
