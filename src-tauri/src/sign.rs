@@ -9,6 +9,15 @@ use tauri::State;
 // ── Types ──────────────────────────────────────────────────────────
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SignaturePosition {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+    pub page: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SignSession {
     pub email: String,
@@ -463,6 +472,7 @@ pub async fn bitsign_sign_pdf(
     signature_png: Vec<u8>,
     reason: String,
     file_name: String,
+    position: Option<SignaturePosition>,
 ) -> Result<SignResult, String> {
     let session = {
         let conn = db.lock().map_err(|e| e.to_string())?;
@@ -471,12 +481,17 @@ pub async fn bitsign_sign_pdf(
 
     // 1. Submit signature to bit.SIGN
     let client = reqwest::Client::new();
-    let form = reqwest::multipart::Form::new()
+    let mut form = reqwest::multipart::Form::new()
         .part("signature", reqwest::multipart::Part::bytes(signature_png)
             .file_name("signature.png")
             .mime_str("image/png")
             .map_err(|e| e.to_string())?)
         .text("reason", reason);
+
+    if let Some(pos) = &position {
+        let pos_json = serde_json::to_string(pos).map_err(|e| e.to_string())?;
+        form = form.text("position", pos_json);
+    }
 
     let resp = client
         .post(format!("{}/api/v1/documents/{}/sign", session.api_url, document_id))
@@ -553,4 +568,15 @@ pub async fn bitsign_save_signed(
 
     std::fs::remove_file(&temp_path).ok();
     Ok(save_path)
+}
+
+/// Read a local PDF file and return it as base64 for rendering in the frontend
+#[tauri::command]
+pub fn read_pdf_base64(input_path: String) -> Result<String, String> {
+    let bytes = std::fs::read(&input_path)
+        .map_err(|e| format!("PDF lesen fehlgeschlagen: {e}"))?;
+    Ok(base64::Engine::encode(
+        &base64::engine::general_purpose::STANDARD,
+        &bytes,
+    ))
 }

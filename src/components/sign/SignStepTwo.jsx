@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { api } from '../../api'
 import SignatureCanvas from './SignatureCanvas'
+import PdfPreview from './PdfPreview'
+import SignatureOverlay from './SignatureOverlay'
 import {
-  DocumentIcon,
   FingerPrintIcon,
   ArrowPathIcon,
   ExclamationTriangleIcon,
@@ -15,13 +17,49 @@ const REASONS = [
   { id: 'custom', label: 'Eigener Text…' },
 ]
 
+const DEFAULT_SIG_WIDTH_PT = 200
+const DEFAULT_SIG_HEIGHT_PT = 80
+
 export default function SignStepTwo({ data, session, onSign, onBack }) {
   const [reason, setReason] = useState('approved')
   const [customReason, setCustomReason] = useState('')
   const [signing, setSigning] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [signatureFn, setSignatureFn] = useState(null)
+  const [signatureDataUrl, setSignatureDataUrl] = useState(null)
   const timerRef = useRef(null)
+
+  // PDF preview state
+  const [pdfBase64, setPdfBase64] = useState(null)
+  const [pdfLoading, setPdfLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(0) // 0 = not set, will default to last
+  const [pdfInfo, setPdfInfo] = useState(null)
+  const [overlayPos, setOverlayPos] = useState(null)
+
+  // Load PDF for preview
+  useEffect(() => {
+    if (!data.inputPath) return
+    api.readPdfBase64(data.inputPath).then((b64) => {
+      setPdfBase64(b64)
+      setPdfLoading(false)
+    }).catch(() => setPdfLoading(false))
+  }, [data.inputPath])
+
+  // Initialize overlay position when pdfInfo arrives
+  useEffect(() => {
+    if (!pdfInfo) return
+    const scale = pdfInfo.pdfScale
+    const w = DEFAULT_SIG_WIDTH_PT * scale
+    const h = DEFAULT_SIG_HEIGHT_PT * scale
+    const containerW = 460
+    const containerH = pdfInfo.pageHeight * scale
+    setOverlayPos({
+      x: containerW - w - 20,
+      y: containerH - h - 30,
+      w,
+      h,
+    })
+  }, [pdfInfo])
 
   useEffect(() => {
     if (signing) {
@@ -39,6 +77,13 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
 
   const handleSignatureChange = useCallback((exportFn) => {
     setSignatureFn(() => exportFn)
+    // Get current data URL for overlay preview
+    if (exportFn) {
+      const url = exportFn()
+      setSignatureDataUrl(url)
+    } else {
+      setSignatureDataUrl(null)
+    }
   }, [])
 
   const handleSign = async () => {
@@ -47,13 +92,25 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
     if (!dataUrl) return
 
     setSigning(true)
-    // Convert data URL to byte array
     const base64 = dataUrl.split(',')[1]
     const binary = atob(base64)
     const bytes = new Uint8Array(binary.length)
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
 
-    await onSign(effectiveReason, Array.from(bytes))
+    // Convert overlay position from screen px to PDF points
+    let position = null
+    if (overlayPos && pdfInfo) {
+      const scale = pdfInfo.pdfScale
+      position = {
+        x: overlayPos.x / scale,
+        y: pdfInfo.pageHeight - (overlayPos.y + overlayPos.h) / scale,
+        width: overlayPos.w / scale,
+        height: overlayPos.h / scale,
+        page: currentPage || -1,
+      }
+    }
+
+    await onSign(effectiveReason, Array.from(bytes), position)
     setSigning(false)
   }
 
@@ -61,45 +118,66 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex gap-10 flex-1">
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-tight">
+      <div className="flex gap-6 flex-1 min-h-0">
+        {/* Left: PDF Preview */}
+        <div className="shrink-0 animate-fade-up">
+          {pdfLoading ? (
+            <div className="w-[460px] h-[600px] rounded-xl bg-surface-low flex items-center justify-center">
+              <ArrowPathIcon className="w-6 h-6 text-charcoal/30 animate-spin" />
+            </div>
+          ) : pdfBase64 ? (
+            <PdfPreview
+              pdfBase64={pdfBase64}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+              onPdfInfo={setPdfInfo}
+            >
+              <SignatureOverlay
+                signatureDataUrl={signatureDataUrl}
+                containerWidth={460}
+                containerHeight={pdfInfo ? pdfInfo.pageHeight * pdfInfo.pdfScale : 600}
+                position={overlayPos}
+                onPositionChange={setOverlayPos}
+              />
+            </PdfPreview>
+          ) : (
+            <div className="w-[460px] h-[200px] rounded-xl bg-surface-low flex items-center justify-center">
+              <p className="text-xs text-charcoal/30">PDF-Vorschau nicht verfügbar</p>
+            </div>
+          )}
+          {signatureDataUrl && (
+            <p className="text-[10px] text-charcoal/30 mt-1 text-center">
+              Unterschrift per Drag & Drop positionieren
+            </p>
+          )}
+        </div>
+
+        {/* Right: Signature + Options */}
+        <div className="flex-1 min-w-0 overflow-y-auto">
+          <h1 className="text-xl font-bold text-charcoal tracking-tight leading-tight">
             Signatur konfigurieren
           </h1>
-          <p className="mt-2 text-charcoal/40 text-[13px]">Schritt 2 von 3</p>
+          <p className="mt-1 text-charcoal/40 text-[12px]">Schritt 2 von 3</p>
 
-          {/* Datei-Info */}
-          <div className="mt-6 bg-surface-low rounded-xl p-3.5 animate-fade-up">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-                <DocumentIcon className="w-4 h-4 text-amber-600/60" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-semibold text-charcoal truncate">{data.fileName}</p>
-                <p className="text-[9px] text-charcoal/35 mt-0.5">Wird digital signiert</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Unterschrift zeichnen */}
+          {/* Unterschrift */}
           <div className="mt-4 animate-fade-up" style={{ animationDelay: '30ms' }}>
             <label className="block text-[11px] font-semibold text-charcoal/50 mb-2">
               Ihre Unterschrift
             </label>
-            <SignatureCanvas onSignature={handleSignatureChange} />
+            <SignatureCanvas onSignature={handleSignatureChange} width={380} height={140} />
           </div>
 
           {/* Signatur-Grund */}
-          <div className="mt-4 bg-surface-low rounded-2xl p-4 animate-fade-up" style={{ animationDelay: '50ms' }}>
-            <label className="block text-[11px] font-semibold text-charcoal/50 mb-2">
+          <div className="mt-3 bg-surface-low rounded-xl p-3 animate-fade-up" style={{ animationDelay: '50ms' }}>
+            <label className="block text-[10px] font-semibold text-charcoal/50 mb-2">
               Grund der Signatur
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {REASONS.map((r) => (
                 <button
                   key={r.id}
                   onClick={() => setReason(r.id)}
-                  className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 ${
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all duration-150 ${
                     reason === r.id
                       ? 'bg-amber-500/15 text-amber-700 ring-1 ring-amber-500/30'
                       : 'bg-surface text-charcoal/50 hover:bg-surface-mid/50'
@@ -115,30 +193,27 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
                 placeholder="Grund eingeben…"
-                className="mt-2 w-full px-3 py-2 rounded-lg bg-surface text-xs text-charcoal placeholder-charcoal/25 focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-0"
+                className="mt-2 w-full px-3 py-1.5 rounded-lg bg-surface text-xs text-charcoal placeholder-charcoal/25 focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-0"
                 autoFocus
               />
             )}
           </div>
 
           {/* Sicherheitshinweis */}
-          <div className="mt-3 flex items-start gap-2.5 bg-amber-50 rounded-xl p-3 animate-fade-up" style={{ animationDelay: '80ms' }}>
-            <ShieldCheckIcon className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-[11px] font-semibold text-charcoal">PKCS#7-Zertifikat</p>
-              <p className="text-[10px] text-charcoal/50 mt-0.5 leading-relaxed">
-                Ihr PDF wird mit einem rechtsgültigen digitalen Zertifikat signiert,
-                das in Adobe Reader verifizierbar ist.
-              </p>
-            </div>
+          <div className="mt-3 flex items-start gap-2 bg-amber-50 rounded-xl p-2.5 animate-fade-up" style={{ animationDelay: '80ms' }}>
+            <ShieldCheckIcon className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-[10px] text-charcoal/50 leading-relaxed">
+              <span className="font-semibold text-charcoal">PKCS#7-Zertifikat</span> — Ihr PDF wird mit einem
+              rechtsgültigen digitalen Zertifikat signiert (birklein IT GmbH).
+            </p>
           </div>
 
           {data.error && (
-            <div className="mt-3 flex items-start gap-3 bg-red-50 rounded-xl p-3 animate-fade-up">
-              <ExclamationTriangleIcon className="w-5 h-5 text-danger shrink-0 mt-0.5" />
+            <div className="mt-3 flex items-start gap-2 bg-red-50 rounded-xl p-2.5 animate-fade-up">
+              <ExclamationTriangleIcon className="w-4 h-4 text-danger shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-medium text-danger">Signatur fehlgeschlagen</p>
-                <p className="text-[11px] text-danger/70 mt-1">{data.error}</p>
+                <p className="text-[11px] font-medium text-danger">Signatur fehlgeschlagen</p>
+                <p className="text-[10px] text-danger/70 mt-0.5">{data.error}</p>
               </div>
             </div>
           )}
@@ -146,7 +221,7 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-4 pb-2 mt-auto animate-fade-up" style={{ animationDelay: '100ms' }}>
+      <div className="flex items-center justify-between pt-3 pb-2 mt-auto animate-fade-up" style={{ animationDelay: '100ms' }}>
         <button onClick={onBack} className="text-[13px] font-medium text-charcoal/50 hover:text-charcoal/70 transition-colors">
           Zurück
         </button>

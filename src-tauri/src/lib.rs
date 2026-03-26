@@ -48,6 +48,7 @@ pub fn run() {
             database::delete_history,
             mail::open_pdf_mail,
             mail::open_password_mail,
+            mail::open_url,
             mail::show_in_folder,
             settings::get_settings,
             settings::update_settings,
@@ -67,6 +68,7 @@ pub fn run() {
             sign::bitsign_upload_pdf,
             sign::bitsign_sign_pdf,
             sign::bitsign_save_signed,
+            sign::read_pdf_base64,
         ]);
 
     builder
