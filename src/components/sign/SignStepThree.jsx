@@ -38,7 +38,7 @@ export default function SignStepThree({ data, onReset }) {
 
   const handleOpenInBitSign = async () => {
     if (!result?.documentId || !result?.apiUrl) return
-    const url = `${result.apiUrl}/documents/${result.documentId}`
+    const url = `${result.apiUrl}/dokumente/${result.documentId}`
     await api.openUrl(url)
   }
 
