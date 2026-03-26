@@ -104,7 +104,7 @@ export default function SignStepThree({ data, onReset }) {
               </span>
             </div>
             <div className="space-y-2">
-              <DetailRow label="Zertifikat" value={result?.certificate || 'DocuSeal Digital Signature'} />
+              <DetailRow label="Zertifikat" value={result?.certificate || 'birklein IT GmbH'} />
               <DetailRow label="Dokument-ID" value={result?.documentId || '\u2014'} />
               <DetailRow
                 label="Zeitstempel"
