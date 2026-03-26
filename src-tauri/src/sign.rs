@@ -473,6 +473,7 @@ pub async fn bitsign_sign_pdf(
     reason: String,
     file_name: String,
     position: Option<SignaturePosition>,
+    caption_in_png: Option<bool>,
 ) -> Result<SignResult, String> {
     let session = {
         let conn = db.lock().map_err(|e| e.to_string())?;
@@ -487,6 +488,10 @@ pub async fn bitsign_sign_pdf(
             .mime_str("image/png")
             .map_err(|e| e.to_string())?)
         .text("reason", reason);
+
+    if caption_in_png.unwrap_or(false) {
+        form = form.text("captionInPng", "true");
+    }
 
     if let Some(pos) = &position {
         let pos_json = serde_json::to_string(pos).map_err(|e| e.to_string())?;

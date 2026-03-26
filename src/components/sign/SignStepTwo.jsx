@@ -103,7 +103,7 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
       }
     }
 
-    await onSign(effectiveReason, Array.from(bytes), position)
+    await onSign(effectiveReason, Array.from(bytes), position, showCaption)
     setSigning(false)
   }
 

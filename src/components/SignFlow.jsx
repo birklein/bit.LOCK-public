@@ -46,7 +46,7 @@ export default function SignFlow({ onConnected }) {
     setStep(2)
   }, [])
 
-  const handleSign = useCallback(async (reason, signaturePng, position) => {
+  const handleSign = useCallback(async (reason, signaturePng, position, captionInPng) => {
     if (!data.inputPath) return
     setData((d) => ({ ...d, reason, error: null }))
     try {
@@ -64,6 +64,7 @@ export default function SignFlow({ onConnected }) {
         reason,
         fileName: data.fileName,
         position,
+        captionInPng: captionInPng || false,
       })
       setData((d) => ({ ...d, result }))
       setStep(3)
