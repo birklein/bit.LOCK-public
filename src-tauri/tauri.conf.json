@@ -29,8 +29,10 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "",
-      "endpoints": []
+      "pubkey": "GENERATE_WITH: npx tauri signer generate -w .tauri-update-key",
+      "endpoints": [
+        "https://github.com/beeene1/bit.LOCK/releases/latest/download/latest.json"
+      ]
     }
   },
   "bundle": {
