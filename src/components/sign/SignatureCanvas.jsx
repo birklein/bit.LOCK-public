@@ -29,8 +29,7 @@ export default function SignatureCanvas({ onChange, width = 500, height = 180 })
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, width, height)
+    ctx.clearRect(0, 0, width, height)
     ctx.strokeStyle = '#1a1a1a'
     ctx.lineWidth = 2.5
     ctx.lineCap = 'round'
