@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <clipPath id="roundedClip">
+      <rect width="1024" height="1024" rx="220" ry="220"/>
+    </clipPath>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#F59E0B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D97706;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="docGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FEF3C7;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="foldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FDE68A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+    </linearGradient>
+    <filter id="docShadow" x="-10%" y="-5%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="20" flood-color="#92400E" flood-opacity="0.35"/>
+    </filter>
+    <filter id="innerGlow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#FFFFFF" flood-opacity="0.15"/>
+    </filter>
+    <!-- Subtle noise texture -->
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feBlend in="SourceGraphic" mode="multiply" result="noisy"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.03"/>
+      </feComponentTransfer>
+      <feBlend in="SourceGraphic" mode="normal"/>
+    </filter>
+  </defs>
+
+  <g clip-path="url(#roundedClip)">
+    <!-- Amber gradient background -->
+    <rect width="1024" height="1024" fill="url(#amberGrad)"/>
+
+    <!-- Subtle radial highlight top-left -->
+    <radialGradient id="highlight" cx="30%" cy="25%" r="60%">
+      <stop offset="0%" style="stop-color:#FDE68A;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:0" />
+    </radialGradient>
+    <rect width="1024" height="1024" fill="url(#highlight)"/>
+
+    <!-- Document icon - centered, large -->
+    <g filter="url(#docShadow)" transform="translate(512, 420)">
+      <!-- Document body -->
+      <path d="M-170,-280 L90,-280 L170,-200 L170,280 Q170,300 150,300 L-150,300 Q-170,300 -170,280 Z"
+            fill="url(#docGrad)" stroke="none"/>
+
+      <!-- Folded corner -->
+      <path d="M90,-280 L90,-200 Q90,-180 110,-180 L170,-180 Z"
+            fill="url(#foldGrad)" opacity="0.9"/>
+
+      <!-- Corner edge line -->
+      <path d="M90,-280 L170,-200" stroke="#E5A50A" stroke-width="1.5" fill="none" opacity="0.4"/>
+
+      <!-- "PDF" text on document -->
+      <text x="0" y="30" font-family="system-ui, -apple-system, 'Helvetica Neue', sans-serif" font-size="145" font-weight="800"
+        fill="#D97706" text-anchor="middle" letter-spacing="6" opacity="0.85">PDF</text>
+
+      <!-- Horizontal lines representing text -->
+      <rect x="-120" y="90" width="160" height="10" rx="5" fill="#D97706" opacity="0.12"/>
+      <rect x="-120" y="115" width="200" height="10" rx="5" fill="#D97706" opacity="0.12"/>
+      <rect x="-120" y="140" width="130" height="10" rx="5" fill="#D97706" opacity="0.12"/>
+
+      <!-- Small lock badge bottom-right of document -->
+      <g transform="translate(130, 250)">
+        <circle cx="0" cy="0" r="44" fill="#92400E" opacity="0.9"/>
+        <circle cx="0" cy="0" r="40" fill="#FBBF24"/>
+        <svg viewBox="0 0 24 24" width="42" height="42" x="-21" y="-21" fill="#92400E">
+          <path fill-rule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3V12.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clip-rule="evenodd"/>
+        </svg>
+      </g>
+    </g>
+
+    <!-- "bit.PDF" text at bottom -->
+    <text x="512" y="910" font-family="system-ui, -apple-system, 'Helvetica Neue', sans-serif" font-size="78" font-weight="700"
+      fill="white" text-anchor="middle" letter-spacing="3" opacity="0.95">bit.PDF</text>
+
+    <!-- Subtle bottom shadow for text readability -->
+    <linearGradient id="bottomFade" x1="0" y1="850" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" style="stop-color:#92400E;stop-opacity:0"/>
+      <stop offset="100%" style="stop-color:#92400E;stop-opacity:0.2"/>
+    </linearGradient>
+    <rect y="850" width="1024" height="174" fill="url(#bottomFade)"/>
+  </g>
+</svg>

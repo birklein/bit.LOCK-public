@@ -8,13 +8,7 @@ import {
   ClipboardDocumentIcon,
 } from '@heroicons/react/24/outline'
 
-export default function StepTwo({
-  data,
-  onEncrypt,
-  onNewPassword,
-  onRecipientChange,
-  onBack,
-}) {
+export default function StepTwo({ data, onEncrypt, onNewPassword, onRecipientChange, onBack }) {
   const [copied, setCopied] = useState(false)
   const [encrypting, setEncrypting] = useState(false)
 
@@ -44,12 +38,8 @@ export default function StepTwo({
       <div className="flex gap-10 flex-1">
         {/* Main content */}
         <div className="flex-1">
-          <h1 className="text-lg font-bold text-charcoal tracking-tight leading-tight">
-            Sicherheit konfigurieren
-          </h1>
-          <p className="mt-1.5 text-charcoal/40 text-[11px]">
-            Schritt 2 von 3
-          </p>
+          <h1 className="text-lg font-bold text-charcoal tracking-tight leading-tight">Sicherheit konfigurieren</h1>
+          <p className="mt-1.5 text-charcoal/40 text-[11px]">Schritt 2 von 3</p>
 
           {/* Datei-Karte */}
           <div className="mt-8 bg-surface-low rounded-xl p-3.5 animate-fade-up">
@@ -78,10 +68,10 @@ export default function StepTwo({
               onClick={copyPassword}
               className="group flex items-center justify-between px-4 py-4 rounded-xl bg-amber-500/10 cursor-pointer hover:bg-amber-500/15 transition-colors"
             >
-              <span className="font-password text-sm tracking-wider text-charcoal">
-                {data.password}
-              </span>
-              <ClipboardDocumentIcon className={`w-5 h-5 transition-colors ${copied ? 'text-success' : 'text-charcoal/25 group-hover:text-amber-600'}`} />
+              <span className="font-password text-sm tracking-wider text-charcoal">{data.password}</span>
+              <ClipboardDocumentIcon
+                className={`w-5 h-5 transition-colors ${copied ? 'text-success' : 'text-charcoal/25 group-hover:text-amber-600'}`}
+              />
             </div>
 
             <button
@@ -115,10 +105,11 @@ export default function StepTwo({
               <div>
                 <p className="text-xs font-bold text-charcoal">Wichtiger Hinweis</p>
                 <p className="text-[11px] text-charcoal/50 leading-relaxed mt-1">
-                  bit.LOCK arbeitet nach dem Zero-Knowledge-Prinzip. Ihr Passwort wird niemals auf
-                  unseren Servern gespeichert.{' '}
-                  <strong className="text-charcoal/70">Bei Verlust des Passworts können Ihre Daten nicht
-                  wiederhergestellt werden.</strong>
+                  bit.PDF arbeitet nach dem Zero-Knowledge-Prinzip. Ihr Passwort wird niemals auf unseren Servern
+                  gespeichert.{' '}
+                  <strong className="text-charcoal/70">
+                    Bei Verlust des Passworts können Ihre Daten nicht wiederhergestellt werden.
+                  </strong>
                 </p>
               </div>
             </div>
@@ -138,7 +129,10 @@ export default function StepTwo({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-6 pb-2 mt-auto animate-fade-up" style={{ animationDelay: '150ms' }}>
+      <div
+        className="flex items-center justify-between pt-6 pb-2 mt-auto animate-fade-up"
+        style={{ animationDelay: '150ms' }}
+      >
         <button
           onClick={onBack}
           className="text-[13px] font-medium text-charcoal/50 hover:text-charcoal/70 transition-colors"

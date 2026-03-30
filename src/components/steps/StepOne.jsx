@@ -28,7 +28,9 @@ export default function StepOne({ onFileSelected }) {
         setIsDragOver(false)
       }
     })
-    return () => { unlisten.then((f) => f()) }
+    return () => {
+      unlisten.then((f) => f())
+    }
   }, [])
 
   const handleSelectPdf = async () => {
@@ -51,12 +53,8 @@ export default function StepOne({ onFileSelected }) {
       <div className="flex gap-10 flex-1 min-w-0">
         {/* Main content */}
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-tight">
-            Datei auswählen
-          </h1>
-          <p className="mt-3 text-charcoal/40 text-[13px]">
-            Schritt 1: Bereiten Sie Ihre Daten für den Tresor vor.
-          </p>
+          <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-tight">Datei auswählen</h1>
+          <p className="mt-3 text-charcoal/40 text-[13px]">Schritt 1: Bereiten Sie Ihre Daten für den Tresor vor.</p>
 
           {/* Drop Zone */}
           <div
@@ -83,9 +81,7 @@ export default function StepOne({ onFileSelected }) {
               <>
                 <div
                   className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200 ${
-                    isDragOver
-                      ? 'bg-amber-500 shadow-golden scale-110'
-                      : 'bg-amber-50'
+                    isDragOver ? 'bg-amber-500 shadow-golden scale-110' : 'bg-amber-50'
                   }`}
                 >
                   <PlusIcon className={`w-7 h-7 ${isDragOver ? 'text-white' : 'text-amber-500'}`} />
@@ -109,9 +105,7 @@ export default function StepOne({ onFileSelected }) {
           <div className="bg-surface-low rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-5">
               <InformationCircleIcon className="w-5 h-5 text-amber-600" />
-              <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-amber-700">
-                Tipp
-              </span>
+              <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-amber-700">Tipp</span>
             </div>
 
             <div className="space-y-5">
@@ -120,8 +114,8 @@ export default function StepOne({ onFileSelected }) {
                   Drag-and-Drop
                 </h4>
                 <p className="text-xs text-charcoal/50 leading-relaxed">
-                  Sie können eine PDF-Datei direkt in das Upload-Feld ziehen.
-                  bit.LOCK verarbeitet diese lokal auf Ihrem Gerät.
+                  Sie können eine PDF-Datei direkt in das Upload-Feld ziehen. bit.PDF verarbeitet diese lokal auf Ihrem
+                  Gerät.
                 </p>
               </div>
 
@@ -130,8 +124,8 @@ export default function StepOne({ onFileSelected }) {
                   Datenschutz
                 </h4>
                 <p className="text-xs text-charcoal/50 leading-relaxed">
-                  Ihre Dateien verlassen niemals Ihr Gerät. Die Vorbereitung
-                  findet ausschließlich in Ihrem gesicherten lokalen Speicher statt.
+                  Ihre Dateien verlassen niemals Ihr Gerät. Die Vorbereitung findet ausschließlich in Ihrem gesicherten
+                  lokalen Speicher statt.
                 </p>
               </div>
             </div>

@@ -28,9 +28,7 @@ export default function Sidebar({ activeView, onNavigate, signEnabled }) {
           <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center">
             <LockSolid className="w-4.5 h-4.5 text-white" />
           </div>
-          <span className="text-charcoal font-bold text-base tracking-wide">
-            bit.LOCK
-          </span>
+          <span className="text-charcoal font-bold text-base tracking-wide">bit.PDF</span>
         </div>
         <span className="block mt-2 px-11 text-[9px] font-medium tracking-[0.15em] uppercase text-amber-700/40">
           AES-256 Active

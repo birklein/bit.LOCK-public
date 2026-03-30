@@ -19,7 +19,7 @@ use std::path::Path;
 /// Derive a 256-bit key from the machine-bound secret
 fn derive_key(machine_secret: &[u8]) -> [u8; 32] {
     let mut hasher = Sha256::new();
-    hasher.update(b"bit.LOCK-password-encryption-v1");
+    hasher.update(b"bit.PDF-password-encryption-v1");
     hasher.update(machine_secret);
     hasher.finalize().into()
 }

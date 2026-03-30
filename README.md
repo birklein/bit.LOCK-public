@@ -1,4 +1,4 @@
-# bit.LOCK
+# bit.PDF
 
 Sichere PDF-Tools fuer den Desktop — Verschluesselung, Komprimierung, Zusammenfuehrung und digitale Signaturen.
 
@@ -17,13 +17,13 @@ Sichere PDF-Tools fuer den Desktop — Verschluesselung, Komprimierung, Zusammen
 
 ## Tech Stack
 
-| Komponente | Technologie |
-|---|---|
-| Desktop Framework | Tauri 2 (Rust) |
-| Frontend | React 18, Tailwind CSS |
-| PDF-Verschluesselung | qpdf (gebundelte Binary) |
-| Lokale Datenbank | SQLite (better-sqlite3 via rusqlite) |
-| Kryptographie | AES-256-GCM (aes-gcm crate) |
+| Komponente           | Technologie                          |
+| -------------------- | ------------------------------------ |
+| Desktop Framework    | Tauri 2 (Rust)                       |
+| Frontend             | React 18, Tailwind CSS               |
+| PDF-Verschluesselung | qpdf (gebundelte Binary)             |
+| Lokale Datenbank     | SQLite (better-sqlite3 via rusqlite) |
+| Kryptographie        | AES-256-GCM (aes-gcm crate)          |
 
 ## Voraussetzungen
 
@@ -67,13 +67,13 @@ src-tauri/                  Backend (Rust)
 
 Die Signatur-Funktion setzt einen kompatiblen Signatur-Server voraus, der folgende API bereitstellt:
 
-| Endpoint | Methode | Zweck |
-|---|---|---|
-| `/api/auth/oauth2/authorize` | GET | OAuth2 PKCE Login |
-| `/api/v1/documents` | POST | PDF-Upload (Multipart) |
-| `/api/v1/documents/{id}/sign` | POST | Signatur uebermitteln |
-| `/api/v1/documents/{id}/send` | POST | Einladungen an externe Unterzeichner |
-| `/api/v1/documents/{id}/signed-pdf` | GET | Signiertes PDF herunterladen |
+| Endpoint                            | Methode | Zweck                                |
+| ----------------------------------- | ------- | ------------------------------------ |
+| `/api/auth/oauth2/authorize`        | GET     | OAuth2 PKCE Login                    |
+| `/api/v1/documents`                 | POST    | PDF-Upload (Multipart)               |
+| `/api/v1/documents/{id}/sign`       | POST    | Signatur uebermitteln                |
+| `/api/v1/documents/{id}/send`       | POST    | Einladungen an externe Unterzeichner |
+| `/api/v1/documents/{id}/signed-pdf` | GET     | Signiertes PDF herunterladen         |
 
 ## Sicherheit
 

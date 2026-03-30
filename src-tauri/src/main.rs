@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    bit_lock_lib::run()
+    bit_pdf_lib::run()
 }

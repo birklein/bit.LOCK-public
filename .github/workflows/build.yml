@@ -39,14 +39,14 @@ jobs:
       - name: Upload NSIS installer
         uses: actions/upload-artifact@v4
         with:
-          name: bit.LOCK-windows-setup
+          name: bit.PDF-windows-setup
           path: src-tauri/target/release/bundle/nsis/*
           if-no-files-found: warn
 
       - name: Upload MSI installer
         uses: actions/upload-artifact@v4
         with:
-          name: bit.LOCK-windows-msi
+          name: bit.PDF-windows-msi
           path: src-tauri/target/release/bundle/msi/*
           if-no-files-found: warn
 
@@ -82,6 +82,6 @@ jobs:
       - name: Upload DMG
         uses: actions/upload-artifact@v4
         with:
-          name: bit.LOCK-macos-dmg
+          name: bit.PDF-macos-dmg
           path: src-tauri/target/release/bundle/dmg/*
           if-no-files-found: warn

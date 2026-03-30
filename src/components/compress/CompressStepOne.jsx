@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getCurrentWebview } from '@tauri-apps/api/webview'
 import { api } from '../../api'
-import {
-  PlusIcon,
-  DocumentIcon,
-  ArrowsPointingInIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline'
+import { PlusIcon, DocumentIcon, ArrowsPointingInIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 export default function CompressStepOne({ onFileSelected, error }) {
   const [isDragOver, setIsDragOver] = useState(false)
@@ -28,7 +23,9 @@ export default function CompressStepOne({ onFileSelected, error }) {
         setIsDragOver(false)
       }
     })
-    return () => { unlisten.then((f) => f()) }
+    return () => {
+      unlisten.then((f) => f())
+    }
   }, [])
 
   const handleSelectPdf = async () => {
@@ -49,9 +46,7 @@ export default function CompressStepOne({ onFileSelected, error }) {
     <div className="flex flex-col h-full">
       <div className="flex gap-10 flex-1 min-w-0">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-tight">
-            PDF komprimieren
-          </h1>
+          <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-tight">PDF komprimieren</h1>
           <p className="mt-3 text-charcoal/40 text-[13px]">
             Schritt 1: Wählen Sie die Datei die verkleinert werden soll.
           </p>
@@ -78,9 +73,11 @@ export default function CompressStepOne({ onFileSelected, error }) {
               </div>
             ) : (
               <>
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200 ${
-                  isDragOver ? 'bg-amber-500 shadow-golden scale-110' : 'bg-amber-50'
-                }`}>
+                <div
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200 ${
+                    isDragOver ? 'bg-amber-500 shadow-golden scale-110' : 'bg-amber-50'
+                  }`}
+                >
                   <PlusIcon className={`w-7 h-7 ${isDragOver ? 'text-white' : 'text-amber-500'}`} />
                 </div>
                 <div className="text-center">
@@ -107,9 +104,7 @@ export default function CompressStepOne({ onFileSelected, error }) {
           <div className="bg-surface-low rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-5">
               <ArrowsPointingInIcon className="w-5 h-5 text-amber-600" />
-              <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-amber-700">
-                Info
-              </span>
+              <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-amber-700">Info</span>
             </div>
             <div className="space-y-4">
               <div>
@@ -117,8 +112,7 @@ export default function CompressStepOne({ onFileSelected, error }) {
                   Wie funktioniert es?
                 </h4>
                 <p className="text-xs text-charcoal/50 leading-relaxed">
-                  bit.LOCK optimiert eingebettete Bilder und Streams.
-                  Die Textqualität bleibt unverändert.
+                  bit.PDF optimiert eingebettete Bilder und Streams. Die Textqualität bleibt unverändert.
                 </p>
               </div>
               <div>
@@ -126,8 +120,7 @@ export default function CompressStepOne({ onFileSelected, error }) {
                   Typische Ersparnis
                 </h4>
                 <p className="text-xs text-charcoal/50 leading-relaxed">
-                  30–70% bei Dokumenten mit Bildern.
-                  Reine Text-PDFs profitieren weniger.
+                  30–70% bei Dokumenten mit Bildern. Reine Text-PDFs profitieren weniger.
                 </p>
               </div>
             </div>

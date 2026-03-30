@@ -133,12 +133,12 @@ async fn oauth2_pkce_flow(api_url: &str) -> Result<(String, String), String> {
     const CALLBACK_PORT: u16 = 13579;
     let listener = tokio::net::TcpListener::bind(("127.0.0.1", CALLBACK_PORT))
         .await
-        .map_err(|_| "Anmeldung läuft bereits — bitte warten oder bit.LOCK neu starten".to_string())?;
+        .map_err(|_| "Anmeldung läuft bereits — bitte warten oder bit.PDF neu starten".to_string())?;
     let redirect_uri = format!("http://localhost:{}/callback", CALLBACK_PORT);
 
     // OAuth2 authorize endpoint
     let auth_url = format!(
-        "{}/api/auth/oauth2/authorize?client_id=bit-lock&redirect_uri={}&response_type=code&code_challenge={}&code_challenge_method=S256&scope=openid%20profile%20email%20offline_access%20documents:read%20documents:write%20documents:sign",
+        "{}/api/auth/oauth2/authorize?client_id=bit-pdf&redirect_uri={}&response_type=code&code_challenge={}&code_challenge_method=S256&scope=openid%20profile%20email%20offline_access%20documents:read%20documents:write%20documents:sign",
         api_url,
         urlencoding(&redirect_uri),
         challenge,
@@ -173,7 +173,7 @@ async fn oauth2_pkce_flow(api_url: &str) -> Result<(String, String), String> {
         .ok_or("Kein Auth-Code im Callback erhalten")?;
 
     // Success page
-    let html = "<html><body style='font-family:system-ui;text-align:center;padding:60px'><h2>Anmeldung erfolgreich</h2><p>Sie können dieses Fenster schließen und zurück zu bit.LOCK wechseln.</p></body></html>";
+    let html = "<html><body style='font-family:system-ui;text-align:center;padding:60px'><h2>Anmeldung erfolgreich</h2><p>Sie können dieses Fenster schließen und zurück zu bit.PDF wechseln.</p></body></html>";
     let response = format!(
         "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
         html.len(), html
@@ -192,7 +192,7 @@ async fn exchange_code(api_url: &str, code: &str, verifier: &str) -> Result<(Str
             ("grant_type", "authorization_code"),
             ("code", code),
             ("code_verifier", verifier),
-            ("client_id", "bit-lock"),
+            ("client_id", "bit-pdf"),
             ("redirect_uri", &format!("http://localhost:13579/callback")),
         ])
         .send()
@@ -249,7 +249,7 @@ async fn do_refresh_token(api_url: &str, refresh_token: &str) -> Result<(String,
         .form(&[
             ("grant_type", "refresh_token"),
             ("refresh_token", refresh_token),
-            ("client_id", "bit-lock"),
+            ("client_id", "bit-pdf"),
         ])
         .send()
         .await
@@ -545,7 +545,7 @@ pub async fn bitsign_sign_pdf(
         .map_err(|e| format!("Download fehlgeschlagen: {e}"))?;
 
     // 3. Temp-save until user chooses location via "Save as" dialog
-    let temp_dir = std::env::temp_dir().join("bit-lock-signed");
+    let temp_dir = std::env::temp_dir().join("bit-pdf-signed");
     std::fs::create_dir_all(&temp_dir).map_err(|e| e.to_string())?;
     let base_name = std::path::Path::new(&file_name)
         .file_stem().and_then(|s| s.to_str()).unwrap_or("dokument");

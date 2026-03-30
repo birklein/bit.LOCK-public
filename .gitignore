@@ -54,7 +54,7 @@ CLAUDE.md
 features/
 docs/PRD.md
 DESIGN.md
-bit.LOCK.code-workspace
+bit.PDF.code-workspace
 
 # Old Electron code (replaced by Tauri)
 electron.vite.config.js
