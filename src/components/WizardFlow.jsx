@@ -96,25 +96,20 @@ export default function WizardFlow({ onGoToHistory, preselectedFile }) {
       <ProgressBar currentStep={step} />
 
       <div className="flex-1 pt-12 min-h-0 animate-fade-up">
-        {step === 1 && (
-          <StepOne onFileSelected={handleFileSelected} />
-        )}
+        {step === 1 && <StepOne onFileSelected={handleFileSelected} />}
         {step === 2 && (
           <StepTwo
             data={data}
             onEncrypt={handleEncrypt}
             onNewPassword={handleNewPassword}
             onRecipientChange={handleRecipientChange}
-            onBack={() => { setStep(1); setData((d) => ({ ...d, inputPath: null, fileName: null })) }}
+            onBack={() => {
+              setStep(1)
+              setData((d) => ({ ...d, inputPath: null, fileName: null }))
+            }}
           />
         )}
-        {step === 3 && (
-          <StepThree
-            data={data}
-            onReset={handleReset}
-            onGoToHistory={onGoToHistory}
-          />
-        )}
+        {step === 3 && <StepThree data={data} onReset={handleReset} onGoToHistory={onGoToHistory} />}
       </div>
     </div>
   )

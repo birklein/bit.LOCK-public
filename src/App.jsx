@@ -24,7 +24,10 @@ export default function App() {
   const [signEnabled, setSignEnabled] = useState(false)
 
   useEffect(() => {
-    api.bitsignStatus().then((s) => setSignEnabled(!!s)).catch(() => {})
+    api
+      .bitsignStatus()
+      .then((s) => setSignEnabled(!!s))
+      .catch(() => {})
   }, [view])
 
   const handleGoToEncrypt = useCallback((filePath, fileName) => {
@@ -41,7 +44,10 @@ export default function App() {
     <div className="h-screen flex bg-surface overflow-hidden">
       <Sidebar
         activeView={view}
-        onNavigate={(v) => { setPreselectedFile(null); setView(v) }}
+        onNavigate={(v) => {
+          setPreselectedFile(null)
+          setView(v)
+        }}
         signEnabled={signEnabled}
       />
 
@@ -51,29 +57,20 @@ export default function App() {
 
         <main className="flex-1 overflow-auto">
           {view === VIEWS.ENCRYPT && (
-            <WizardFlow
-              onGoToHistory={() => setView(VIEWS.HISTORY)}
-              preselectedFile={preselectedFile}
-            />
+            <WizardFlow onGoToHistory={() => setView(VIEWS.HISTORY)} preselectedFile={preselectedFile} />
           )}
-          {view === VIEWS.COMPRESS && (
-            <CompressFlow onGoToEncrypt={handleGoToEncrypt} />
-          )}
-          {view === VIEWS.MERGE && (
-            <MergeFlow
-              onGoToEncrypt={handleGoToEncrypt}
-              onGoToCompress={handleGoToCompress}
-            />
-          )}
-          {view === VIEWS.SIGN && (
-            <SignFlow onConnected={() => setSignEnabled(true)} />
-          )}
+          {view === VIEWS.COMPRESS && <CompressFlow onGoToEncrypt={handleGoToEncrypt} />}
+          {view === VIEWS.MERGE && <MergeFlow onGoToEncrypt={handleGoToEncrypt} onGoToCompress={handleGoToCompress} />}
+          {view === VIEWS.SIGN && <SignFlow onConnected={() => setSignEnabled(true)} />}
           {view === VIEWS.HISTORY && (
-            <HistoryView onNewEncrypt={() => { setPreselectedFile(null); setView(VIEWS.ENCRYPT) }} />
+            <HistoryView
+              onNewEncrypt={() => {
+                setPreselectedFile(null)
+                setView(VIEWS.ENCRYPT)
+              }}
+            />
           )}
-          {view === VIEWS.SETTINGS && (
-            <SettingsView />
-          )}
+          {view === VIEWS.SETTINGS && <SettingsView />}
         </main>
       </div>
     </div>

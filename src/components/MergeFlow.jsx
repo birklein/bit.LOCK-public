@@ -62,9 +62,8 @@ export default function MergeFlow({ onGoToEncrypt, onGoToCompress }) {
 
   const handleMerge = async () => {
     const names = files.map((f) => f.name.replace(/\.pdf$/i, ''))
-    const suggested = names.length <= 3
-      ? names.join('_') + '.pdf'
-      : names[0] + '_und_' + (names.length - 1) + '_weitere.pdf'
+    const suggested =
+      names.length <= 3 ? names.join('_') + '.pdf' : names[0] + '_und_' + (names.length - 1) + '_weitere.pdf'
     const savePath = await api.selectMergeSavePath(suggested)
     if (!savePath) return
     setMerging(true)
@@ -131,9 +130,7 @@ function StepSelect({ files, onAdd, onRemove, onMoveUp, onMoveDown, onMerge, mer
     <div className="flex flex-col h-full">
       <div className="flex gap-10 flex-1 min-w-0">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-tight">
-            PDFs zusammenführen
-          </h1>
+          <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-tight">PDFs zusammenführen</h1>
           <p className="mt-3 text-charcoal/40 text-[13px]">
             Wählen Sie die Dateien aus und ordnen Sie sie in der gewünschten Reihenfolge.
           </p>
@@ -141,23 +138,29 @@ function StepSelect({ files, onAdd, onRemove, onMoveUp, onMoveDown, onMerge, mer
           {/* File list */}
           <div className="mt-10 space-y-2 animate-fade-up">
             {files.map((file, idx) => (
-              <div
-                key={`${file.path}-${idx}`}
-                className="flex items-center gap-3 bg-surface-low rounded-xl px-4 py-3"
-              >
+              <div key={`${file.path}-${idx}`} className="flex items-center gap-3 bg-surface-low rounded-xl px-4 py-3">
                 <span className="w-6 h-6 rounded-full bg-amber-500/10 flex items-center justify-center text-[10px] font-bold text-amber-700 shrink-0">
                   {idx + 1}
                 </span>
                 <DocumentIcon className="w-4 h-4 text-charcoal/25 shrink-0" />
                 <span className="text-xs font-medium text-charcoal truncate flex-1">{file.name}</span>
                 <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => onMoveUp(idx)} className="p-1 text-charcoal/20 hover:text-charcoal/50 transition-colors">
+                  <button
+                    onClick={() => onMoveUp(idx)}
+                    className="p-1 text-charcoal/20 hover:text-charcoal/50 transition-colors"
+                  >
                     <ChevronUpIcon className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={() => onMoveDown(idx)} className="p-1 text-charcoal/20 hover:text-charcoal/50 transition-colors">
+                  <button
+                    onClick={() => onMoveDown(idx)}
+                    className="p-1 text-charcoal/20 hover:text-charcoal/50 transition-colors"
+                  >
                     <ChevronDownIcon className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={() => onRemove(idx)} className="p-1 text-charcoal/20 hover:text-danger transition-colors ml-1">
+                  <button
+                    onClick={() => onRemove(idx)}
+                    className="p-1 text-charcoal/20 hover:text-danger transition-colors ml-1"
+                  >
                     <TrashIcon className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -173,11 +176,7 @@ function StepSelect({ files, onAdd, onRemove, onMoveUp, onMoveDown, onMerge, mer
             </button>
           </div>
 
-          {error && (
-            <div className="mt-4 bg-red-50 rounded-xl p-4 text-xs text-danger animate-fade-up">
-              {error}
-            </div>
-          )}
+          {error && <div className="mt-4 bg-red-50 rounded-xl p-4 text-xs text-danger animate-fade-up">{error}</div>}
         </div>
 
         <aside className="w-60 shrink-0">
@@ -188,9 +187,12 @@ function StepSelect({ files, onAdd, onRemove, onMoveUp, onMoveDown, onMerge, mer
             </div>
             <div className="space-y-4">
               <div>
-                <h4 className="text-[10px] font-bold tracking-[0.12em] uppercase text-charcoal/60 mb-1.5">Reihenfolge</h4>
+                <h4 className="text-[10px] font-bold tracking-[0.12em] uppercase text-charcoal/60 mb-1.5">
+                  Reihenfolge
+                </h4>
                 <p className="text-xs text-charcoal/50 leading-relaxed">
-                  Die Dateien werden in der angezeigten Reihenfolge zusammengeführt. Nutzen Sie die Pfeile zum Sortieren.
+                  Die Dateien werden in der angezeigten Reihenfolge zusammengeführt. Nutzen Sie die Pfeile zum
+                  Sortieren.
                 </p>
               </div>
               <div>
@@ -244,7 +246,9 @@ function StepDone({ result, onReset, onGoToEncrypt, onGoToCompress }) {
           </div>
 
           <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-[1.1] animate-fade-up">
-            Erfolgreich<br />zusammengeführt!
+            Erfolgreich
+            <br />
+            zusammengeführt!
           </h1>
 
           <div className="mt-10 bg-amber-500/10 rounded-2xl p-5 animate-fade-up" style={{ animationDelay: '80ms' }}>
@@ -280,14 +284,22 @@ function StepDone({ result, onReset, onGoToEncrypt, onGoToCompress }) {
           {/* Weiterverarbeitung */}
           <div className="mt-4 grid grid-cols-2 gap-3 animate-fade-up" style={{ animationDelay: '150ms' }}>
             <button
-              onClick={() => onGoToEncrypt && result?.outputPath && onGoToEncrypt(result.outputPath, result.outputPath.split(/[\\/]/).pop())}
+              onClick={() =>
+                onGoToEncrypt &&
+                result?.outputPath &&
+                onGoToEncrypt(result.outputPath, result.outputPath.split(/[\\/]/).pop())
+              }
               className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-surface-low hover:bg-surface-mid/50 transition-colors"
             >
               <LockClosedIcon className="w-4 h-4 text-charcoal/30" />
               <span className="text-xs font-medium text-charcoal/50">Verschlüsseln</span>
             </button>
             <button
-              onClick={() => onGoToCompress && result?.outputPath && onGoToCompress(result.outputPath, result.outputPath.split(/[\\/]/).pop())}
+              onClick={() =>
+                onGoToCompress &&
+                result?.outputPath &&
+                onGoToCompress(result.outputPath, result.outputPath.split(/[\\/]/).pop())
+              }
               className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-surface-low hover:bg-surface-mid/50 transition-colors"
             >
               <ArrowsPointingInIcon className="w-4 h-4 text-charcoal/30" />
@@ -313,7 +325,10 @@ function StepDone({ result, onReset, onGoToEncrypt, onGoToCompress }) {
         </aside>
       </div>
 
-      <div className="flex items-center gap-6 text-xs pt-6 pb-2 mt-auto animate-fade-up" style={{ animationDelay: '180ms' }}>
+      <div
+        className="flex items-center gap-6 text-xs pt-6 pb-2 mt-auto animate-fade-up"
+        style={{ animationDelay: '180ms' }}
+      >
         <button onClick={onReset} className="text-charcoal/40 hover:text-charcoal/60 transition-colors">
           Zurück zur Übersicht
         </button>

@@ -32,10 +32,10 @@ module.exports = {
           highest: '#DFDBD5',
         },
         vault: {
-          lid: '#31302D',      // Titlebar — "heavy lid"
-          floor: '#FFFBF5',    // Main background
-          wall: '#F7F3ED',     // Card backgrounds
-          steel: '#D8C3AD',    // Ghost borders (20% opacity)
+          lid: '#31302D', // Titlebar — "heavy lid"
+          floor: '#FFFBF5', // Main background
+          wall: '#F7F3ED', // Card backgrounds
+          steel: '#D8C3AD', // Ghost borders (20% opacity)
         },
         // Semantic
         success: '#059669',
@@ -44,16 +44,16 @@ module.exports = {
       boxShadow: {
         // Ambient shadows — tinted, diffused, never pure black
         'ambient-sm': '0 2px 8px rgba(28, 28, 24, 0.04)',
-        'ambient': '0 4px 16px rgba(28, 28, 24, 0.05)',
+        ambient: '0 4px 16px rgba(28, 28, 24, 0.05)',
         'ambient-lg': '0 8px 32px rgba(28, 28, 24, 0.06)',
         'ambient-xl': '0 16px 48px rgba(28, 28, 24, 0.08)',
         // Golden glow for primary CTA
-        'golden': '0 4px 20px rgba(245, 158, 11, 0.25)',
+        golden: '0 4px 20px rgba(245, 158, 11, 0.25)',
         'golden-lg': '0 8px 32px rgba(245, 158, 11, 0.3)',
       },
       spacing: {
-        '4.5': '1.125rem',
-        '18': '4.5rem',
+        4.5: '1.125rem',
+        18: '4.5rem',
       },
       animation: {
         'pulse-amber': 'pulseAmber 2s ease-in-out infinite',

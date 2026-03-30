@@ -26,25 +26,28 @@ export default function CompressFlow({ onGoToEncrypt }) {
     }
   }, [])
 
-  const handleCompress = useCallback(async (quality) => {
-    if (!data.inputPath) return
-    const baseName = data.fileName.replace(/\.pdf$/i, '')
-    const savePath = await api.selectCompressSavePath(baseName)
-    if (!savePath) return
+  const handleCompress = useCallback(
+    async (quality) => {
+      if (!data.inputPath) return
+      const baseName = data.fileName.replace(/\.pdf$/i, '')
+      const savePath = await api.selectCompressSavePath(baseName)
+      if (!savePath) return
 
-    setData((d) => ({ ...d, outputPath: savePath, error: null }))
-    try {
-      const result = await api.compressPdf({
-        inputPath: data.inputPath,
-        outputPath: savePath,
-        quality,
-      })
-      setData((d) => ({ ...d, result }))
-      setStep(3)
-    } catch (err) {
-      setData((d) => ({ ...d, error: String(err) }))
-    }
-  }, [data])
+      setData((d) => ({ ...d, outputPath: savePath, error: null }))
+      try {
+        const result = await api.compressPdf({
+          inputPath: data.inputPath,
+          outputPath: savePath,
+          quality,
+        })
+        setData((d) => ({ ...d, result }))
+        setStep(3)
+      } catch (err) {
+        setData((d) => ({ ...d, error: String(err) }))
+      }
+    },
+    [data],
+  )
 
   const handleReset = useCallback(() => {
     setStep(1)
@@ -60,7 +63,10 @@ export default function CompressFlow({ onGoToEncrypt }) {
           <CompressStepTwo
             data={data}
             onCompress={handleCompress}
-            onBack={() => { setStep(1); setData((d) => ({ ...d, inputPath: null, fileName: null, analysis: null })) }}
+            onBack={() => {
+              setStep(1)
+              setData((d) => ({ ...d, inputPath: null, fileName: null, analysis: null }))
+            }}
           />
         )}
         {step === 3 && (

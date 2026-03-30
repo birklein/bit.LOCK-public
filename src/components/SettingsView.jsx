@@ -31,7 +31,10 @@ export default function SettingsView() {
       // Load saved tenant URL from settings
       if (s?.bitsignTenantUrl) setSignTenantUrl(s.bitsignTenantUrl)
     })
-    api.bitsignStatus().then(setSignStatus).catch(() => {})
+    api
+      .bitsignStatus()
+      .then(setSignStatus)
+      .catch(() => {})
   }, [])
 
   const update = useCallback((key, value) => {
@@ -163,10 +166,7 @@ export default function SettingsView() {
       {/* Updates */}
       <Section icon={ArrowPathIcon} title="Updates" className="mt-6">
         <Field label="Automatisch nach Updates suchen">
-          <Toggle
-            checked={settings.autoCheckUpdates}
-            onChange={(v) => update('autoCheckUpdates', v)}
-          />
+          <Toggle checked={settings.autoCheckUpdates} onChange={(v) => update('autoCheckUpdates', v)} />
         </Field>
       </Section>
 
@@ -187,9 +187,7 @@ export default function SettingsView() {
               {signStatus ? (
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                  <span className="text-xs text-charcoal/60">
-                    Verbunden als {signStatus.name || signStatus.email}
-                  </span>
+                  <span className="text-xs text-charcoal/60">Verbunden als {signStatus.name || signStatus.email}</span>
                 </div>
               ) : (
                 <span className="text-xs text-charcoal/40">Nicht verbunden</span>
@@ -213,13 +211,15 @@ export default function SettingsView() {
           <Field label="Account">
             <div className="bg-surface rounded-xl p-3 space-y-1">
               <p className="text-xs text-charcoal">{signStatus.name || signStatus.email}</p>
-              <p className="text-[10px] text-charcoal/40">{signStatus.tenantSlug} · {signStatus.role} · {signStatus.apiUrl}</p>
+              <p className="text-[10px] text-charcoal/40">
+                {signStatus.tenantSlug} · {signStatus.role} · {signStatus.apiUrl}
+              </p>
             </div>
           </Field>
         )}
         <p className="text-[10px] text-charcoal/25 leading-relaxed">
-          Wenn aktiviert, erscheint "Signieren" in der Navigation.
-          Die Anmeldung erfolgt sicher über den Browser (OAuth2 PKCE).
+          Wenn aktiviert, erscheint "Signieren" in der Navigation. Die Anmeldung erfolgt sicher über den Browser (OAuth2
+          PKCE).
         </p>
       </Section>
 
@@ -284,9 +284,7 @@ function Section({ icon: Icon, title, className, children }) {
         <Icon className="w-4 h-4 text-amber-600" />
         <h2 className="text-[11px] font-bold tracking-[0.12em] uppercase text-amber-700">{title}</h2>
       </div>
-      <div className="bg-surface-low rounded-2xl p-5 space-y-5">
-        {children}
-      </div>
+      <div className="bg-surface-low rounded-2xl p-5 space-y-5">{children}</div>
     </div>
   )
 }
@@ -322,9 +320,7 @@ function Toggle({ checked, onChange }) {
   return (
     <button
       onClick={() => onChange(!checked)}
-      className={`relative w-10 h-6 rounded-full transition-colors ${
-        checked ? 'bg-amber-500' : 'bg-surface-high'
-      }`}
+      className={`relative w-10 h-6 rounded-full transition-colors ${checked ? 'bg-amber-500' : 'bg-surface-high'}`}
     >
       <div
         className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${

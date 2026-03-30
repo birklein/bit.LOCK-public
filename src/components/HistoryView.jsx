@@ -102,13 +102,9 @@ export default function HistoryView({ onNewEncrypt }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-charcoal truncate">
-                        {entry.fileName}
-                      </p>
+                      <p className="text-sm font-semibold text-charcoal truncate">{entry.fileName}</p>
                       {entry.recipient && (
-                        <p className="text-xs text-charcoal/35 mt-0.5 truncate">
-                          → {entry.recipient}
-                        </p>
+                        <p className="text-xs text-charcoal/35 mt-0.5 truncate">→ {entry.recipient}</p>
                       )}
                     </div>
                     <span className="text-[11px] text-charcoal/25 shrink-0 whitespace-nowrap">
@@ -126,11 +122,7 @@ export default function HistoryView({ onNewEncrypt }) {
                         onClick={() => togglePassword(entry.id)}
                         className="text-charcoal/20 hover:text-amber-600 transition-colors"
                       >
-                        {isVisible ? (
-                          <EyeSlashIcon className="w-4 h-4" />
-                        ) : (
-                          <EyeIcon className="w-4 h-4" />
-                        )}
+                        {isVisible ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
                       </button>
                     </div>
 

@@ -1,10 +1,5 @@
 import { useState } from 'react'
-import {
-  DocumentIcon,
-  ArrowPathIcon,
-  ArrowsPointingInIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline'
+import { DocumentIcon, ArrowPathIcon, ArrowsPointingInIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 function formatSize(bytes) {
   if (bytes < 1024) return `${bytes} B`
@@ -25,14 +20,14 @@ export default function CompressStepTwo({ data, onCompress, onBack }) {
   const { analysis, fileName, error } = data
 
   const estimatedSize = analysis
-    ? quality === 'email' ? analysis.estimatedEmail
-      : quality === 'print' ? analysis.estimatedPrint
-      : analysis.estimatedStandard
+    ? quality === 'email'
+      ? analysis.estimatedEmail
+      : quality === 'print'
+        ? analysis.estimatedPrint
+        : analysis.estimatedStandard
     : 0
 
-  const savingsPercent = analysis
-    ? Math.round((1 - estimatedSize / analysis.fileSize) * 100)
-    : 0
+  const savingsPercent = analysis ? Math.round((1 - estimatedSize / analysis.fileSize) * 100) : 0
 
   const handleCompress = async () => {
     setCompressing(true)
@@ -44,9 +39,7 @@ export default function CompressStepTwo({ data, onCompress, onBack }) {
     <div className="flex flex-col h-full">
       <div className="flex gap-10 flex-1">
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-tight">
-            Komprimierung wählen
-          </h1>
+          <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-tight">Komprimierung wählen</h1>
           <p className="mt-2 text-charcoal/40 text-[13px]">Schritt 2 von 3</p>
 
           {/* Datei-Info */}
@@ -62,7 +55,9 @@ export default function CompressStepTwo({ data, onCompress, onBack }) {
                   <span className="text-charcoal/15">·</span>
                   <span className="text-[9px] text-charcoal/35">{analysis?.imageCount || 0} Bilder</span>
                   <span className="text-charcoal/15">·</span>
-                  <span className="text-[9px] text-charcoal/35">{analysis?.fontCount || 0} Fonts ({formatSize(analysis?.fontBytes || 0)})</span>
+                  <span className="text-[9px] text-charcoal/35">
+                    {analysis?.fontCount || 0} Fonts ({formatSize(analysis?.fontBytes || 0)})
+                  </span>
                 </div>
               </div>
             </div>
@@ -116,8 +111,8 @@ export default function CompressStepTwo({ data, onCompress, onBack }) {
               <div>
                 <p className="text-xs font-semibold text-charcoal">Kaum Komprimierung möglich</p>
                 <p className="text-[11px] text-charcoal/50 mt-1">
-                  Dieses PDF enthält keine eingebetteten Bilder. Nur Bilder lassen sich
-                  signifikant verkleinern — bei reinen Text-PDFs ist die Ersparnis minimal (1–3%).
+                  Dieses PDF enthält keine eingebetteten Bilder. Nur Bilder lassen sich signifikant verkleinern — bei
+                  reinen Text-PDFs ist die Ersparnis minimal (1–3%).
                 </p>
               </div>
             </div>
@@ -136,8 +131,14 @@ export default function CompressStepTwo({ data, onCompress, onBack }) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-6 pb-2 mt-auto animate-fade-up" style={{ animationDelay: '100ms' }}>
-        <button onClick={onBack} className="text-[13px] font-medium text-charcoal/50 hover:text-charcoal/70 transition-colors">
+      <div
+        className="flex items-center justify-between pt-6 pb-2 mt-auto animate-fade-up"
+        style={{ animationDelay: '100ms' }}
+      >
+        <button
+          onClick={onBack}
+          className="text-[13px] font-medium text-charcoal/50 hover:text-charcoal/70 transition-colors"
+        >
           Zurück
         </button>
         <button

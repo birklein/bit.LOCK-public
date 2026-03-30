@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getCurrentWebview } from '@tauri-apps/api/webview'
 import { api } from '../../api'
-import {
-  PlusIcon,
-  DocumentIcon,
-  FingerPrintIcon,
-  UserCircleIcon,
-} from '@heroicons/react/24/outline'
+import { PlusIcon, DocumentIcon, FingerPrintIcon, UserCircleIcon } from '@heroicons/react/24/outline'
 
 export default function SignStepOne({ onFileSelected, session, onLogout }) {
   const [isDragOver, setIsDragOver] = useState(false)
@@ -27,7 +22,9 @@ export default function SignStepOne({ onFileSelected, session, onLogout }) {
         setIsDragOver(false)
       }
     })
-    return () => { unlisten.then((f) => f()) }
+    return () => {
+      unlisten.then((f) => f())
+    }
   }, [])
 
   const handleSelectPdf = async () => {
@@ -45,12 +42,8 @@ export default function SignStepOne({ onFileSelected, session, onLogout }) {
     <div className="flex flex-col h-full">
       <div className="flex gap-10 flex-1 min-w-0">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-tight">
-            Dokument signieren
-          </h1>
-          <p className="mt-3 text-charcoal/40 text-[13px]">
-            Schritt 1: Wählen Sie das PDF für die digitale Signatur.
-          </p>
+          <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-tight">Dokument signieren</h1>
+          <p className="mt-3 text-charcoal/40 text-[13px]">Schritt 1: Wählen Sie das PDF für die digitale Signatur.</p>
 
           <div
             onClick={handleSelectPdf}
@@ -74,9 +67,11 @@ export default function SignStepOne({ onFileSelected, session, onLogout }) {
               </div>
             ) : (
               <>
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200 ${
-                  isDragOver ? 'bg-amber-500 shadow-golden scale-110' : 'bg-amber-50'
-                }`}>
+                <div
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200 ${
+                    isDragOver ? 'bg-amber-500 shadow-golden scale-110' : 'bg-amber-50'
+                  }`}
+                >
                   <PlusIcon className={`w-7 h-7 ${isDragOver ? 'text-white' : 'text-amber-500'}`} />
                 </div>
                 <div className="text-center">
@@ -94,16 +89,16 @@ export default function SignStepOne({ onFileSelected, session, onLogout }) {
           <div className="bg-surface-low rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-4">
               <FingerPrintIcon className="w-4 h-4 text-amber-600" />
-              <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-amber-700">
-                Signatur
-              </span>
+              <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-amber-700">Signatur</span>
             </div>
 
             <div className="flex items-center gap-3 mb-4">
               <UserCircleIcon className="w-8 h-8 text-charcoal/20" />
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-charcoal truncate">{session?.name || session?.email}</p>
-                <p className="text-[10px] text-charcoal/40 truncate">{session?.tenantSlug} · {session?.role}</p>
+                <p className="text-[10px] text-charcoal/40 truncate">
+                  {session?.tenantSlug} · {session?.role}
+                </p>
               </div>
             </div>
 
@@ -113,8 +108,7 @@ export default function SignStepOne({ onFileSelected, session, onLogout }) {
                 Verbunden
               </div>
               <p className="leading-relaxed">
-                Dokumente werden mit dem Zertifikat Ihres Tenants signiert.
-                Nur der Hash verlässt Ihr Gerät.
+                Dokumente werden mit dem Zertifikat Ihres Tenants signiert. Nur der Hash verlässt Ihr Gerät.
               </p>
             </div>
 

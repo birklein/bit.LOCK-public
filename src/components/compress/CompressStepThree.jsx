@@ -26,7 +26,9 @@ export default function CompressStepThree({ data, onReset, onGoToEncrypt }) {
           </div>
 
           <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-[1.1] animate-fade-up">
-            Erfolgreich<br />komprimiert!
+            Erfolgreich
+            <br />
+            komprimiert!
           </h1>
 
           {/* Vorher/Nachher */}
@@ -34,7 +36,9 @@ export default function CompressStepThree({ data, onReset, onGoToEncrypt }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[9px] font-bold tracking-[0.15em] uppercase text-amber-700/50 mb-1">Vorher</p>
-                <p className="text-lg font-bold text-charcoal/40 line-through">{formatSize(result?.originalSize || 0)}</p>
+                <p className="text-lg font-bold text-charcoal/40 line-through">
+                  {formatSize(result?.originalSize || 0)}
+                </p>
               </div>
               <ArrowRightIcon className="w-5 h-5 text-charcoal/20" />
               <div>
@@ -87,7 +91,10 @@ export default function CompressStepThree({ data, onReset, onGoToEncrypt }) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center gap-6 text-xs pt-6 pb-2 mt-auto animate-fade-up" style={{ animationDelay: '150ms' }}>
+      <div
+        className="flex items-center gap-6 text-xs pt-6 pb-2 mt-auto animate-fade-up"
+        style={{ animationDelay: '150ms' }}
+      >
         <button onClick={onReset} className="text-charcoal/40 hover:text-charcoal/60 transition-colors">
           Zurück zur Übersicht
         </button>

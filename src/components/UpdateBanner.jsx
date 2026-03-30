@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react'
 import { check } from '@tauri-apps/plugin-updater'
 import { relaunch } from '@tauri-apps/plugin-process'
-import {
-  ArrowDownTrayIcon,
-  XMarkIcon,
-  ArrowPathIcon,
-} from '@heroicons/react/24/solid'
+import { ArrowDownTrayIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/solid'
 
 export default function UpdateBanner() {
   const [update, setUpdate] = useState(null)
@@ -78,10 +74,7 @@ export default function UpdateBanner() {
           >
             Jetzt aktualisieren
           </button>
-          <button
-            onClick={() => setDismissed(true)}
-            className="text-amber-400 hover:text-amber-600 transition-colors"
-          >
+          <button onClick={() => setDismissed(true)} className="text-amber-400 hover:text-amber-600 transition-colors">
             <XMarkIcon className="w-4 h-4" />
           </button>
         </>
@@ -90,9 +83,7 @@ export default function UpdateBanner() {
       {status === 'downloading' && (
         <>
           <ArrowPathIcon className="w-4 h-4 text-amber-600 shrink-0 animate-spin" />
-          <span className="text-amber-800 flex-1">
-            Download läuft… {progress > 0 ? `${progress}%` : ''}
-          </span>
+          <span className="text-amber-800 flex-1">Download läuft… {progress > 0 ? `${progress}%` : ''}</span>
           <div className="w-32 h-1.5 bg-amber-200 rounded-full overflow-hidden">
             <div
               className="h-full bg-amber-500 rounded-full transition-all duration-300"
@@ -113,7 +104,10 @@ export default function UpdateBanner() {
         <>
           <span className="text-red-600 flex-1 text-xs">Update fehlgeschlagen: {error}</span>
           <button
-            onClick={() => { setStatus('idle'); setError(null) }}
+            onClick={() => {
+              setStatus('idle')
+              setError(null)
+            }}
             className="text-xs text-amber-600 hover:text-amber-800"
           >
             Erneut versuchen

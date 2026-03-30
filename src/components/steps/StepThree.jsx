@@ -53,12 +53,13 @@ export default function StepThree({ data, onReset, onGoToHistory }) {
         </div>
 
         <h1 className="text-2xl font-bold text-charcoal tracking-tight leading-[1.1] animate-fade-up">
-          Erfolgreich<br />verschlüsselt!
+          Erfolgreich
+          <br />
+          verschlüsselt!
         </h1>
         <p className="mt-3 text-charcoal/50 text-[13px] leading-relaxed max-w-md animate-fade-up">
-          Deine Datei wurde sicher verpackt und ist nun bereit
-          für den Versand. Du kannst jetzt die Datei teilen und
-          das Passwort separat übermitteln.
+          Deine Datei wurde sicher verpackt und ist nun bereit für den Versand. Du kannst jetzt die Datei teilen und das
+          Passwort separat übermitteln.
         </p>
 
         {/* Ergebnis-Karten */}
@@ -87,9 +88,7 @@ export default function StepThree({ data, onReset, onGoToHistory }) {
               <KeyIcon className="w-5 h-5 text-amber-600" />
             </div>
             <h3 className="text-sm font-bold text-charcoal">Das Passwort</h3>
-            <p className="font-password text-xs text-charcoal/40 mt-1 tracking-wider">
-              •••• •••• •••• ••••
-            </p>
+            <p className="font-password text-xs text-charcoal/40 mt-1 tracking-wider">•••• •••• •••• ••••</p>
             <button
               onClick={copyPassword}
               className="mt-4 flex items-center gap-2 text-xs font-semibold text-amber-600 hover:text-amber-700 transition-colors"
@@ -118,7 +117,10 @@ export default function StepThree({ data, onReset, onGoToHistory }) {
           </button>
         </div>
 
-        <p className="mt-2 text-[10px] text-charcoal/30 leading-relaxed animate-fade-up" style={{ animationDelay: '160ms' }}>
+        <p
+          className="mt-2 text-[10px] text-charcoal/30 leading-relaxed animate-fade-up"
+          style={{ animationDelay: '160ms' }}
+        >
           Hinweis: Unter macOS und Outlook muss der Anhang manuell zur E-Mail hinzugefügt werden.
         </p>
 
@@ -142,14 +144,10 @@ export default function StepThree({ data, onReset, onGoToHistory }) {
         <div className="bg-surface-low rounded-2xl p-6 animate-fade-up" style={{ animationDelay: '150ms' }}>
           <div className="flex items-center gap-2 mb-4">
             <ShieldCheckIcon className="w-5 h-5 text-amber-600" />
-            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-amber-700">
-              Sicherheitstipp
-            </span>
+            <span className="text-[10px] font-bold tracking-[0.15em] uppercase text-amber-700">Sicherheitstipp</span>
           </div>
 
-          <h3 className="text-sm font-bold text-charcoal mb-2">
-            Zwei-Kanal-Methode
-          </h3>
+          <h3 className="text-sm font-bold text-charcoal mb-2">Zwei-Kanal-Methode</h3>
           <p className="text-xs text-charcoal/50 leading-relaxed italic">
             "Sende die PDF per Mail und das Passwort über einen anderen Weg, z.B. Signal oder SMS."
           </p>

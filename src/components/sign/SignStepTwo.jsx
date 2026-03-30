@@ -50,10 +50,13 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
   // Load PDF for preview
   useEffect(() => {
     if (!data.inputPath) return
-    api.readPdfBase64(data.inputPath).then((b64) => {
-      setPdfBase64(b64)
-      setPdfLoading(false)
-    }).catch(() => setPdfLoading(false))
+    api
+      .readPdfBase64(data.inputPath)
+      .then((b64) => {
+        setPdfBase64(b64)
+        setPdfLoading(false)
+      })
+      .catch(() => setPdfLoading(false))
   }, [data.inputPath])
 
   // Initialize overlay position when pdfInfo arrives
@@ -82,9 +85,7 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
     return () => clearInterval(timerRef.current)
   }, [signing])
 
-  const effectiveReason = reason === 'custom'
-    ? customReason
-    : REASONS.find((r) => r.id === reason)?.label || ''
+  const effectiveReason = reason === 'custom' ? customReason : REASONS.find((r) => r.id === reason)?.label || ''
 
   const handleSignatureChange = useCallback((dataUrl) => {
     setSignatureDataUrl(dataUrl)
@@ -163,24 +164,18 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
             </div>
           )}
           {signatureDataUrl && (
-            <p className="text-[10px] text-charcoal/30 mt-1 text-center">
-              Unterschrift per Drag & Drop positionieren
-            </p>
+            <p className="text-[10px] text-charcoal/30 mt-1 text-center">Unterschrift per Drag & Drop positionieren</p>
           )}
         </div>
 
         {/* Right: Signature + Options */}
         <div className="flex-1 min-w-0 overflow-y-auto">
-          <h1 className="text-xl font-bold text-charcoal tracking-tight leading-tight">
-            Signatur konfigurieren
-          </h1>
+          <h1 className="text-xl font-bold text-charcoal tracking-tight leading-tight">Signatur konfigurieren</h1>
           <p className="mt-1 text-charcoal/40 text-[12px]">Schritt 2 von 3</p>
 
           {/* Unterschrift */}
           <div className="mt-4 animate-fade-up" style={{ animationDelay: '30ms' }}>
-            <label className="block text-[11px] font-semibold text-charcoal/50 mb-2">
-              Ihre Unterschrift
-            </label>
+            <label className="block text-[11px] font-semibold text-charcoal/50 mb-2">Ihre Unterschrift</label>
             <SignatureCanvas onChange={handleSignatureChange} caption={caption} width={380} height={140} />
           </div>
 
@@ -217,9 +212,7 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
 
           {/* Signatur-Grund */}
           <div className="mt-3 bg-surface-low rounded-xl p-3 animate-fade-up" style={{ animationDelay: '50ms' }}>
-            <label className="block text-[10px] font-semibold text-charcoal/50 mb-2">
-              Grund der Signatur
-            </label>
+            <label className="block text-[10px] font-semibold text-charcoal/50 mb-2">Grund der Signatur</label>
             <div className="flex flex-wrap gap-1.5">
               {REASONS.map((r) => (
                 <button
@@ -309,7 +302,10 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
           </div>
 
           {/* Sicherheitshinweis */}
-          <div className="mt-3 flex items-start gap-2 bg-amber-50 rounded-xl p-2.5 animate-fade-up" style={{ animationDelay: '80ms' }}>
+          <div
+            className="mt-3 flex items-start gap-2 bg-amber-50 rounded-xl p-2.5 animate-fade-up"
+            style={{ animationDelay: '80ms' }}
+          >
             <ShieldCheckIcon className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-[10px] text-charcoal/50 leading-relaxed">
               <span className="font-semibold text-charcoal">PKCS#7-Zertifikat</span> — Ihr PDF wird mit einem
@@ -330,8 +326,14 @@ export default function SignStepTwo({ data, session, onSign, onBack }) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-3 pb-2 mt-auto animate-fade-up" style={{ animationDelay: '100ms' }}>
-        <button onClick={onBack} className="text-[13px] font-medium text-charcoal/50 hover:text-charcoal/70 transition-colors">
+      <div
+        className="flex items-center justify-between pt-3 pb-2 mt-auto animate-fade-up"
+        style={{ animationDelay: '100ms' }}
+      >
+        <button
+          onClick={onBack}
+          className="text-[13px] font-medium text-charcoal/50 hover:text-charcoal/70 transition-colors"
+        >
           Zurück
         </button>
         <button

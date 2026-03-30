@@ -1,9 +1,5 @@
 import { useState } from 'react'
-import {
-  FingerPrintIcon,
-  ArrowPathIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline'
+import { FingerPrintIcon, ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 export default function SignLogin({ onLogin, defaultUrl }) {
   const [apiUrl, setApiUrl] = useState(defaultUrl || '')
@@ -32,19 +28,15 @@ export default function SignLogin({ onLogin, defaultUrl }) {
         <FingerPrintIcon className="w-8 h-8 text-amber-600" />
       </div>
 
-      <h1 className="text-2xl font-bold text-charcoal tracking-tight text-center">
-        Mit Signatur-Server anmelden
-      </h1>
+      <h1 className="text-2xl font-bold text-charcoal tracking-tight text-center">Mit Signatur-Server anmelden</h1>
       <p className="mt-3 text-charcoal/40 text-[13px] text-center leading-relaxed">
-        Melden Sie sich mit Ihrem Signatur-Konto an, um Dokumente
-        digital zu signieren. Ihr Browser wird für die Anmeldung geöffnet.
+        Melden Sie sich mit Ihrem Signatur-Konto an, um Dokumente digital zu signieren. Ihr Browser wird für die
+        Anmeldung geöffnet.
       </p>
 
       <div className="mt-8 w-full space-y-4">
         <div>
-          <label className="block text-[11px] font-semibold text-charcoal/50 mb-1.5">
-            Signatur-Server URL
-          </label>
+          <label className="block text-[11px] font-semibold text-charcoal/50 mb-1.5">Signatur-Server URL</label>
           <input
             type="url"
             value={apiUrl}
@@ -85,8 +77,7 @@ export default function SignLogin({ onLogin, defaultUrl }) {
       </div>
 
       <p className="mt-6 text-[10px] text-charcoal/25 text-center leading-relaxed">
-        Die App öffnet Ihren Browser für die sichere Anmeldung.
-        Ihre Zugangsdaten werden nie in der App eingegeben.
+        Die App öffnet Ihren Browser für die sichere Anmeldung. Ihre Zugangsdaten werden nie in der App eingegeben.
       </p>
     </div>
   )

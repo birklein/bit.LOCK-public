@@ -9,5 +9,7 @@ export function generatePassword() {
   const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&'
   const bytes = new Uint8Array(16)
   window.crypto.getRandomValues(bytes)
-  return Array.from(bytes).map((b) => charset[b % charset.length]).join('')
+  return Array.from(bytes)
+    .map((b) => charset[b % charset.length])
+    .join('')
 }

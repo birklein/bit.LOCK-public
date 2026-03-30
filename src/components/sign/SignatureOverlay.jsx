@@ -23,29 +23,35 @@ export default function SignatureOverlay({
     img.src = signatureDataUrl
   }, [signatureDataUrl])
 
-  const clamp = useCallback((pos) => {
-    return {
-      x: Math.max(0, Math.min(pos.x, containerWidth - pos.w)),
-      y: Math.max(0, Math.min(pos.y, containerHeight - pos.h)),
-      w: Math.max(MIN_WIDTH, Math.min(pos.w, containerWidth)),
-      h: Math.max(MIN_WIDTH / aspectRef.current, Math.min(pos.h, containerHeight)),
-    }
-  }, [containerWidth, containerHeight])
+  const clamp = useCallback(
+    (pos) => {
+      return {
+        x: Math.max(0, Math.min(pos.x, containerWidth - pos.w)),
+        y: Math.max(0, Math.min(pos.y, containerHeight - pos.h)),
+        w: Math.max(MIN_WIDTH, Math.min(pos.w, containerWidth)),
+        h: Math.max(MIN_WIDTH / aspectRef.current, Math.min(pos.h, containerHeight)),
+      }
+    },
+    [containerWidth, containerHeight],
+  )
 
-  const onMouseMove = useCallback((e) => {
-    if (modeRef.current === 'idle') return
-    const s = startRef.current
-    const dx = e.clientX - s.mx
-    const dy = e.clientY - s.my
+  const onMouseMove = useCallback(
+    (e) => {
+      if (modeRef.current === 'idle') return
+      const s = startRef.current
+      const dx = e.clientX - s.mx
+      const dy = e.clientY - s.my
 
-    if (modeRef.current === 'dragging') {
-      onPositionChange(clamp({ x: s.x + dx, y: s.y + dy, w: s.w, h: s.h }))
-    } else if (modeRef.current === 'resizing') {
-      const newW = Math.max(MIN_WIDTH, s.w + dx)
-      const newH = newW / aspectRef.current
-      onPositionChange(clamp({ x: s.x, y: s.y, w: newW, h: newH }))
-    }
-  }, [clamp, onPositionChange])
+      if (modeRef.current === 'dragging') {
+        onPositionChange(clamp({ x: s.x + dx, y: s.y + dy, w: s.w, h: s.h }))
+      } else if (modeRef.current === 'resizing') {
+        const newW = Math.max(MIN_WIDTH, s.w + dx)
+        const newH = newW / aspectRef.current
+        onPositionChange(clamp({ x: s.x, y: s.y, w: newW, h: newH }))
+      }
+    },
+    [clamp, onPositionChange],
+  )
 
   const onMouseUp = useCallback(() => {
     modeRef.current = 'idle'
@@ -60,19 +66,25 @@ export default function SignatureOverlay({
     }
   }, [onMouseMove, onMouseUp])
 
-  const startDrag = useCallback((e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    modeRef.current = 'dragging'
-    startRef.current = { mx: e.clientX, my: e.clientY, ...position }
-  }, [position])
+  const startDrag = useCallback(
+    (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      modeRef.current = 'dragging'
+      startRef.current = { mx: e.clientX, my: e.clientY, ...position }
+    },
+    [position],
+  )
 
-  const startResize = useCallback((e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    modeRef.current = 'resizing'
-    startRef.current = { mx: e.clientX, my: e.clientY, ...position }
-  }, [position])
+  const startResize = useCallback(
+    (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      modeRef.current = 'resizing'
+      startRef.current = { mx: e.clientX, my: e.clientY, ...position }
+    },
+    [position],
+  )
 
   if (!signatureDataUrl || !position) return null
 

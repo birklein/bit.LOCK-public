@@ -41,7 +41,9 @@ export default function SignatureCanvas({ onChange, caption, width = 500, height
     ctx.lineJoin = 'round'
   }, [width, totalHeight])
 
-  useEffect(() => { clearCanvas() }, [clearCanvas])
+  useEffect(() => {
+    clearCanvas()
+  }, [clearCanvas])
 
   const drawCaption = useCallback(() => {
     if (!caption) return
@@ -117,25 +119,31 @@ export default function SignatureCanvas({ onChange, caption, width = 500, height
     }
   }, [])
 
-  const startDraw = useCallback((e) => {
-    if (mode !== 'draw') return
-    e.preventDefault()
-    const ctx = canvasRef.current.getContext('2d')
-    const pos = getPos(e)
-    ctx.beginPath()
-    ctx.moveTo(pos.x, pos.y)
-    setDrawing(true)
-  }, [getPos, mode])
+  const startDraw = useCallback(
+    (e) => {
+      if (mode !== 'draw') return
+      e.preventDefault()
+      const ctx = canvasRef.current.getContext('2d')
+      const pos = getPos(e)
+      ctx.beginPath()
+      ctx.moveTo(pos.x, pos.y)
+      setDrawing(true)
+    },
+    [getPos, mode],
+  )
 
-  const draw = useCallback((e) => {
-    if (!drawing || mode !== 'draw') return
-    e.preventDefault()
-    const ctx = canvasRef.current.getContext('2d')
-    const pos = getPos(e)
-    ctx.lineTo(pos.x, pos.y)
-    ctx.stroke()
-    if (!hasContent) setHasContent(true)
-  }, [drawing, getPos, mode, hasContent])
+  const draw = useCallback(
+    (e) => {
+      if (!drawing || mode !== 'draw') return
+      e.preventDefault()
+      const ctx = canvasRef.current.getContext('2d')
+      const pos = getPos(e)
+      ctx.lineTo(pos.x, pos.y)
+      ctx.stroke()
+      if (!hasContent) setHasContent(true)
+    },
+    [drawing, getPos, mode, hasContent],
+  )
 
   const stopDraw = useCallback(() => {
     if (drawing) {
@@ -153,10 +161,13 @@ export default function SignatureCanvas({ onChange, caption, width = 500, height
     onChange?.(null)
   }, [clearCanvas, onChange])
 
-  const switchMode = useCallback((newMode) => {
-    clear()
-    setMode(newMode)
-  }, [clear])
+  const switchMode = useCallback(
+    (newMode) => {
+      clear()
+      setMode(newMode)
+    },
+    [clear],
+  )
 
   return (
     <div className="space-y-2">
@@ -165,9 +176,7 @@ export default function SignatureCanvas({ onChange, caption, width = 500, height
         <button
           onClick={() => switchMode('draw')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
-            mode === 'draw'
-              ? 'bg-amber-500/15 text-amber-700'
-              : 'text-charcoal/40 hover:text-charcoal/60'
+            mode === 'draw' ? 'bg-amber-500/15 text-amber-700' : 'text-charcoal/40 hover:text-charcoal/60'
           }`}
         >
           <PencilIcon className="w-3 h-3" />
@@ -176,9 +185,7 @@ export default function SignatureCanvas({ onChange, caption, width = 500, height
         <button
           onClick={() => switchMode('type')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
-            mode === 'type'
-              ? 'bg-amber-500/15 text-amber-700'
-              : 'text-charcoal/40 hover:text-charcoal/60'
+            mode === 'type' ? 'bg-amber-500/15 text-amber-700' : 'text-charcoal/40 hover:text-charcoal/60'
           }`}
         >
           <LanguageIcon className="w-3 h-3" />
@@ -216,9 +223,7 @@ export default function SignatureCanvas({ onChange, caption, width = 500, height
         />
         {!hasContent && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <p className="text-charcoal/20 text-sm">
-              {mode === 'draw' ? 'Hier unterschreiben' : 'Name oben eingeben'}
-            </p>
+            <p className="text-charcoal/20 text-sm">{mode === 'draw' ? 'Hier unterschreiben' : 'Name oben eingeben'}</p>
           </div>
         )}
       </div>
